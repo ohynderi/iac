@@ -1,0 +1,99 @@
+fabric:
+  domains:
+    physical:
+      - name: phy1
+        state: present
+        vlans:
+          - range: 100 - 120
+            state: present
+          - range: 130 - 140
+            state: present
+
+      - name: phy2
+        state: present
+        vlans:
+          - range: 200 - 220
+            state: present
+          - range: 230 - 240
+            state: present
+
+    external:
+      - name: ext1
+        state: present
+        vlans:
+          - range: 300 - 320
+            state: present
+          - range: 330 - 340
+            state: present
+
+      - name: ext2
+        state: present
+        vlans:
+          - range: 400 - 420
+            state: present
+          - range: 430 - 440
+            state: present
+
+  intf_policies:
+    lldp:
+      - name: lldp_enabled
+        description: lldp TX and RX on
+        receive: "yes"
+        transmit: "yes"
+        state: present
+
+      - name: lldp_disabled
+        description: lldp TX and RX off
+        receive: "no"
+        transmit: "no"
+        state: present
+
+    cdp:
+      - name: cdp_disabled
+        admin_state: "off"
+        state: present
+
+      - name: cdp_enabled
+        admin_state: "on"
+        state: present
+
+    mcp:
+      - name: mcp_enabled
+        description: mcp_enabled
+        admin_state: "yes"
+        state: present
+
+      - name: mcp_disabled
+        description: mcp disabled
+        admin_state: "no"
+        state: present
+
+    po:
+      - name: lacp_active
+        description: LACP Active
+        min: "1"
+        max: "16"
+        mode: "active"
+        state: present
+
+  intf_policy_groups:
+    - name: server1
+      type: access
+      state: present
+      # lldp: lldp-enabled
+      aep: aaep
+      description: server 1
+
+    - name: server2
+      type: po
+      state: present
+      lldp: lldp-enabled
+      aep: aaep
+      description: server 2
+
+    - name: server3
+      type: vpc
+      state: present
+      lldp: lldp-enabled
+      aep: aaep
+      description: server 3
