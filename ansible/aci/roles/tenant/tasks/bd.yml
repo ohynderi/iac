@@ -11,21 +11,15 @@
   no_log: true
 
 - cisco.aci.aci_bd:
-    <<: *aci_login
+    <<: *aci_cred
     tenant: "{{ tenant_vars.name }}"
     vrf: "{{ bd_vars.name }}"
     bd: "{{ bd_vars.name }}"
     state: "{{ bd_vars.state | default( [] ) }}"
   delegate_to: localhost
-  register: job
-  async: 600
-  poll: 0
-
-- set_fact:
-    async_jobs: "{{ async_jobs + [ job ]}}"
 
 - cisco.aci.aci_bd_subnet:
-    <<: *aci_login
+    <<: *aci_cred
     tenant: "{{ tenant_vars.name }}"
     bd: "{{ bd_vars.name }}"
     gateway: "{{ bd_vars.gateway }}"
@@ -33,9 +27,3 @@
     scope: "{{ bd_vars.scope }}"
     state: "{{ bd_vars.state | default( [] ) }}"
   delegate_to: localhost
-  register: tmp_rsl
-  async: 600
-  poll: 0
-
-- set_fact:
-    async_jobs: "{{ async_jobs + [ job ]}}"

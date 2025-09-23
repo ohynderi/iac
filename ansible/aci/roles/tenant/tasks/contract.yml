@@ -11,41 +11,23 @@
   no_log: true
 
 - cisco.aci.aci_contract:
-    <<: *aci_login
+    <<: *aci_cred
     tenant: "{{ tenant_vars.name }}"
     contract: "{{ contract_vars.name }}"
     scope: "context"
   delegate_to: localhost
-  register: job
-  async: 600
-  poll: 0
-
-- set_fact:
-    async_jobs: "{{ async_jobs + [ job ] }}"
 
 - cisco.aci.aci_contract_subject:
-    <<: *aci_login
+    <<: *aci_cred
     tenant: "{{ tenant_vars.name }}"
     contract: "{{ contract_vars.name }}"
     subject: "{{ contract_vars.subject }}"
   delegate_to: localhost
-  register: epg_async_jobs
-  async: 600
-  poll: 0
-
-- set_fact:
-    async_jobs: "{{ async_jobs + [ job ] }}"
 
 - cisco.aci.aci_contract_subject_to_filter:
-    <<: *aci_login
+    <<: *aci_cred
     tenant: "{{ tenant_vars.name }}"
     contract: "{{ contract_vars.name }}"
     subject: "{{ contract_vars.subject }}"
     filter: "{{ contract_vars.filter }}"
   delegate_to: localhost
-  register: epg_async_jobs
-  async: 600
-  poll: 0
-
-- set_fact:
-    async_jobs: "{{ async_jobs +  [ job ] }}"

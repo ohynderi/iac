@@ -11,20 +11,15 @@
   no_log: true
 
 - cisco.aci.aci_ap:
-    <<: *aci_login
+    <<: *aci_cred
     tenant: "{{ tenant_vars.name }}"
     ap: "{{ ap_vars.name }}"
     state: "{{ ap_vars.state | default('present') }}"
   delegate_to: localhost
-  register: job
-  async: 600
-  poll: 0
 
-- set_fact:
-    async_jobs: "{{ async_jobs + [ job ] }}"
 
 - cisco.aci.aci_epg:
-    <<: *aci_login
+    <<: *aci_cred
     tenant: "{{ tenant_vars.name }}"
     ap: "{{ ap_vars.name }}"
     epg: "{{ item.name }}"
@@ -34,15 +29,9 @@
   loop_control:
     label: "{{ [ tenant_vars.name, item.name ] | join('/') }}"
   delegate_to: localhost
-  register: epg_async_jobs
-  async: 600
-  poll: 0
-
-- set_fact:
-    async_jobs: "{{ async_jobs +  epg_async_jobs.results }}"
 
 - cisco.aci.aci_epg_to_domain:
-    <<: *aci_login
+    <<: *aci_cred
     tenant: "{{ tenant_vars.name }}"
     ap: "{{ ap_vars.name }}"
     epg: "{{ item.name }}"
@@ -52,15 +41,10 @@
   loop_control:
     label: "{{ [ tenant_vars.name, item.name, item.domain ] | join('/') }}"
   delegate_to: localhost
-  register: epg_async_jobs
-  async: 600
-  poll: 0
 
-- set_fact:
-    async_jobs: "{{ async_jobs +  epg_async_jobs.results }}"
 
 - cisco.aci.aci_static_binding_to_epg:
-    <<: *aci_login
+    <<: *aci_cred
     tenant: "{{ tenant_vars.name }}"
     ap: "{{  ap_vars.name }}"
     epg: "{{ item.0.name }}"
@@ -76,9 +60,4 @@
   loop_control:
     label: "{{ [ tenant_vars.name, item.0.name, item.1.name ] | join('/') }}"
   delegate_to: localhost
-  register: epg_inf_async_jobs
-  async: 600
-  poll: 0
 
-- set_fact:
-    async_jobs: "{{ async_jobs +  epg_inf_async_jobs.results }}"
