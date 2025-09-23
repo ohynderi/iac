@@ -1,0 +1,35 @@
+---
+- name: ENSURE APPLICATION CONFIGURATION EXISTS
+  hosts: apic
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - set_fact:
+        intf_to_leaf_map: {} # crete by the fabric role and used by the node role
+        intf_pg_map: {} # create by the node role and use by the tenant role
+        leaf_to_vpc_domain_map: {}
+
+    - name: Apply fabric policies role
+      include_role:
+        name: fabric
+      vars:
+        intf_policies: "{{ fabric.intf_policies }}"
+        intf_policies_groups: "{{ fabric.intf_policy_groups}}"
+        domains: "{{ fabric.domains }}"
+
+    - name: Apply node role to each node
+      include_role:
+        name: node
+      loop: "{{ nodes }}"
+      loop_control:
+        loop_var: node_vars
+        label: "{{ node_vars.name }}"
+
+    - name: Apply tenant role to each tenant
+      include_role:
+        name: tenant
+      loop: "{{ tenants }}"
+      loop_control:
+        loop_var: tenant_vars
+        label: "{{ tenant_vars.name }}"
