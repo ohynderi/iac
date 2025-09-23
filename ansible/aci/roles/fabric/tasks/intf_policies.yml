@@ -11,7 +11,7 @@
   no_log: true
 
 - cisco.aci.aci_interface_policy_lldp:
-    <<: *aci_login
+    <<: *aci_cred
     lldp_policy: "{{ item.name }}"
     description: "{{ item.description | default('') }}"
     receive_state: "{{ item.receive }}"
@@ -21,15 +21,9 @@
   loop_control:
     label: "{{ item.name }}"
   delegate_to: localhost
-  register: job
-  async: 600
-  poll: 0
-
-- set_fact:
-    async_jobs: "{{ async_jobs + job.results }}"
 
 - cisco.aci.aci_interface_policy_cdp:
-    <<: *aci_login
+    <<: *aci_cred
     name: "{{ item.name }}"
     description: "{{ item.description | default('') }}"
     admin_state: "{{ item.admin_state }}"
@@ -38,15 +32,9 @@
   loop_control:
     label: "{{ item.name }}"
   delegate_to: localhost
-  register: job
-  async: 600
-  poll: 0
-
-- set_fact:
-    async_jobs: "{{ async_jobs + job.results }}"
 
 - cisco.aci.aci_interface_policy_mcp:
-    <<: *aci_login
+    <<: *aci_cred
     mcp: "{{ item.name }}"
     description: "{{ item.description | default('') }}"
     admin_state: "{{ item.admin_state }}"
@@ -55,15 +43,9 @@
   loop_control:
     label: "{{ item.name }}"
   delegate_to: localhost
-  register: job
-  async: 600
-  poll: 0
-
-- set_fact:
-    async_jobs: "{{ async_jobs + job.results }}"
 
 - cisco.aci.aci_interface_policy_port_channel:
-    <<: *aci_login
+    <<: *aci_cred
     port_channel: "{{ item.name }}"
     description: "{{ item.description | default('') }}"
     min_links: "{{ item.min }}"
@@ -74,9 +56,3 @@
   loop_control:
     label: "{{ item.name }}"
   delegate_to: localhost
-  register: job
-  async: 600
-  poll: 0
-
-- set_fact:
-    async_jobs: "{{ async_jobs + job.results }}"

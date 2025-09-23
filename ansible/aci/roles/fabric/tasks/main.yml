@@ -22,11 +22,3 @@
   loop_control:
     loop_var: domain_vars
     label: "{{ domain_vars.key }}"
-
-- async_status:
-    jid: "{{ item.ansible_job_id }}"
-  register: job_result
-  until: job_result.finished
-  retries: 30
-  delay: 2
-  loop: "{{ async_jobs }}"

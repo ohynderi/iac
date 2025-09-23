@@ -58,12 +58,3 @@
     loop_var: filter_vars
     label: "{{ [ tenant_vars.name, filter_vars.name ] | join('/') }}"
   when: tenant_present
-
-- async_status:
-    jid: "{{ item.ansible_job_id }}"
-  register: job_result
-  until: job_result.finished
-  retries: 30
-  delay: 2
-  loop: "{{ async_jobs }}"
-

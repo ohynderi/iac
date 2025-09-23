@@ -12,37 +12,25 @@
 
 - block:
           - cisco.aci.aci_domain:
-                    <<: *aci_login
+                    <<: *aci_cred
                     domain: "{{ item.name }}"
                     domain_type: "{{ lookup('vars', 'domain_type_map')[ domain_vars.key ] }}"
                     state: "{{ item.state }}"
 
             loop: "{{ domain_vars.value }}"
             delegate_to: localhost
-            register: domain_async_job
-            async: 600
-            poll: 0
-
-          - set_fact:
-                    async_jobs: "{{ async_jobs + domain_async_job.results }}"
 
           - cisco.aci.aci_vlan_pool:
-                    <<: *aci_login
+                    <<: *aci_cred
                     pool: "{{ item.name }}_pool"
                     pool_allocation_mode: "static"
                     state: "{{ item.state }}"
 
             loop: "{{ domain_vars.value }}"
             delegate_to: localhost
-            register: vlan_pool_async_job
-            async: 600
-            poll: 0
-
-          - set_fact:
-                    async_jobs: "{{ async_jobs + vlan_pool_async_job.results }}"
 
           - cisco.aci.aci_domain_to_vlan_pool:
-                    <<: *aci_login
+                    <<: *aci_cred
                     domain: "{{ item.name }}"
                     domain_type: "{{ lookup('vars', 'domain_type_map')[ domain_vars.key ] }}"
                     pool: "{{ item.name }}_pool"
@@ -51,15 +39,9 @@
 
             loop: "{{ domain_vars.value }}"
             delegate_to: localhost
-            register: vlan_pool_rs_async_job
-            async: 600
-            poll: 0
-
-          - set_fact:
-                    async_jobs: "{{ async_jobs + vlan_pool_rs_async_job.results }}"
 
           - cisco.aci.aci_vlan_pool_encap_block:
-                    <<: *aci_login
+                    <<: *aci_cred
                     pool: "{{ item.0.name }}_pool"
                     pool_allocation_mode: static
                     block_name: "blockname_{{ item.1.range | regex_search('^\\d+') }}_{{ item.1.range | regex_search('\\d+$') }}"
@@ -69,18 +51,12 @@
 
             loop: "{{ query('subelements', domain_vars.value, 'vlans') }}"
             delegate_to: localhost
-            register: vlan_range_async_job
-            async: 600
-            poll: 0
-
-          - set_fact:
-                    async_jobs: "{{ async_jobs + vlan_range_async_job.results }}"
 
   when: domain_vars.key != "virtual"
 
 - block:
           - cisco.aci.aci_domain:
-                    <<: *aci_login
+                    <<: *aci_cred
                     domain: "{{ item.name }}"
                     domain_type: "{{ lookup('vars', 'domain_type_map')[ domain_vars.key ] }}"
                     vm_provider: "vmware"

@@ -4,12 +4,3 @@
 
 - name: Import vpc protection group tasks
   include_tasks: vpc_domain.yml 
-
-- async_status:
-    jid: "{{ item.ansible_job_id }}"
-  register: job_result
-  until: job_result.finished
-  retries: 30
-  delay: 2
-  loop: "{{ async_jobs }}"
-
