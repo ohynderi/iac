@@ -1,0 +1,39 @@
+---
+- set_fact:
+    aci_cred: &aci_login
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      use_proxy: no
+      use_ssl: yes
+      validate_certs: no
+      annotation: orchestrator:ansible
+  no_log: true
+
+- cisco.aci.aci_filter:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    filter: "{{ filter_vars.name }}"
+  delegate_to: localhost
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + [ job ] }}"
+
+- cisco.aci.aci_filter_entry:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    filter: "{{ filter_vars.name }}"
+    entry: "{{ filter_vars.entry }}"
+    ether_type: ip
+    ip_protocol: "{{ filter_vars.protocol }}"
+    dst_port: "{{ filter_vars.port }}"
+  delegate_to: localhost
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + [ job ] }}"

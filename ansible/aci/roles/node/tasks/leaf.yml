@@ -1,0 +1,89 @@
+---
+- set_fact:
+    async_jobs: []
+    aci_cred: &aci_login
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      use_proxy: no
+      use_ssl: yes
+      validate_certs: no
+      annotation: orchestrator:ansible
+  no_log: true
+
+- cisco.aci.aci_switch_policy_leaf_profile:
+    <<: *aci_login
+    leaf_profile: "{{ node_vars.name }}_profile"
+    description: "{{ node_vars.description | default('') }}"
+    state: "{{ node_vars.state | default('present') }}"
+  delegate_to: localhost
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + [ job ]}}"
+
+- cisco.aci.aci_switch_leaf_selector:
+    <<: *aci_login
+    leaf_profile: "{{ node_vars.name }}_profile"
+    leaf: "{{ node_vars.name }}"
+    leaf_node_blk: "blk_{{ node_vars.id }}"
+    from: "{{ node_vars.id }}"
+    to: "{{ node_vars.id }}"
+    state: "{{ node_vars.state | default('present') }}"
+  delegate_to: localhost
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + [ job ]}}"
+
+- cisco.aci.aci_interface_policy_leaf_profile:
+    <<: *aci_login
+    leaf_interface_profile: "{{ node_vars.name }}_interface"
+    state: "{{ node_vars.state | default('present') }}"
+  delegate_to: localhost
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + [ job ]}}"
+
+- cisco.aci.aci_interface_selector_to_switch_policy_leaf_profile:
+    <<: *aci_login
+    leaf_profile: "{{ node_vars.name }}_profile"
+    interface_selector: "{{ node_vars.name }}_interfaces"
+    state: "{{ node_vars.state | default('present') }}"
+  delegate_to: localhost
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + [ job ]}}"
+
+- set_fact:
+    intf_to_leaf_map: "{{ intf_to_leaf_map | combine({ item.intf_pol_group : { 'port': [ item.card, item.port ] | join('/'), 'leaf': node_vars.id } }) }}"
+  loop: "{{ node_vars.interfaces }}"
+
+- cisco.aci.aci_access_port_to_interface_policy_leaf_profile:
+    <<: *aci_login
+    leaf_interface_profile: "{{ node_vars.name }}_interface"
+    access_port_selector: "eth_{{ item.card }}_{{ item.port }}"
+    interface_type: "{{ intf_pg_map[ item.intf_pol_group ] }}"
+    leaf_port_blk: "{{ item.card }}"
+    from_port: "{{ item.port }}"
+    to_port: "{{ item.port }}"
+    policy_group: "{{ item.intf_pol_group }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ node_vars.interfaces }}"
+  delegate_to: localhost
+  register: epg_async_jobs
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs +  epg_async_jobs.results }}"
