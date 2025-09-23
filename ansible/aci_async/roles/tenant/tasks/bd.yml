@@ -1,0 +1,41 @@
+---
+- set_fact:
+    aci_cred: &aci_login
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      use_proxy: no
+      use_ssl: yes
+      validate_certs: no
+      annotation: orchestrator:ansible
+  no_log: true
+
+- cisco.aci.aci_bd:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    vrf: "{{ bd_vars.name }}"
+    bd: "{{ bd_vars.name }}"
+    state: "{{ bd_vars.state | default( [] ) }}"
+  delegate_to: localhost
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + [ job ]}}"
+
+- cisco.aci.aci_bd_subnet:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    bd: "{{ bd_vars.name }}"
+    gateway: "{{ bd_vars.gateway }}"
+    mask: "{{ bd_vars.mask }}"
+    scope: "{{ bd_vars.scope }}"
+    state: "{{ bd_vars.state | default( [] ) }}"
+  delegate_to: localhost
+  register: tmp_rsl
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + [ job ]}}"

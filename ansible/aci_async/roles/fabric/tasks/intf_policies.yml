@@ -1,0 +1,82 @@
+---
+- set_fact:
+    aci_cred: &aci_login
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      use_proxy: no
+      use_ssl: yes
+      validate_certs: no
+      annotation: orchestrator:ansible
+  no_log: true
+
+- cisco.aci.aci_interface_policy_lldp:
+    <<: *aci_login
+    lldp_policy: "{{ item.name }}"
+    description: "{{ item.description | default('') }}"
+    receive_state: "{{ item.receive }}"
+    transmit_state: "{{ item.transmit }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ intf_policies.lldp | default( [] ) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  delegate_to: localhost
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + job.results }}"
+
+- cisco.aci.aci_interface_policy_cdp:
+    <<: *aci_login
+    name: "{{ item.name }}"
+    description: "{{ item.description | default('') }}"
+    admin_state: "{{ item.admin_state }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ intf_policies.cdp | default( [] ) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  delegate_to: localhost
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + job.results }}"
+
+- cisco.aci.aci_interface_policy_mcp:
+    <<: *aci_login
+    mcp: "{{ item.name }}"
+    description: "{{ item.description | default('') }}"
+    admin_state: "{{ item.admin_state }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ intf_policies.mcp | default( [] ) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  delegate_to: localhost
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + job.results }}"
+
+- cisco.aci.aci_interface_policy_port_channel:
+    <<: *aci_login
+    port_channel: "{{ item.name }}"
+    description: "{{ item.description | default('') }}"
+    min_links: "{{ item.min }}"
+    max_links: "{{ item.max }}"
+    mode: "{{ item.mode }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ intf_policies.po | default( [] ) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  delegate_to: localhost
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + job.results }}"

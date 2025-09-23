@@ -1,0 +1,24 @@
+---
+- set_fact:
+    aci_cred: &aci_login
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      use_proxy: no
+      use_ssl: yes
+      validate_certs: no
+      annotation: orchestrator:ansible
+  no_log: true
+
+- aci_vrf:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    descr: "{{ vrf_vars.description | default('') }}"
+    vrf: "{{ vrf_vars.name }}"
+    state: "{{ vrf_vars.state | default('present') }}"
+  register: job
+  async: 600
+  poll: 0
+
+- set_fact:
+    async_jobs: "{{ async_jobs + [ job ]}}"
