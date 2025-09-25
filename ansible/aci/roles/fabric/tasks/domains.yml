@@ -12,7 +12,7 @@
 
 - block:
           - cisco.aci.aci_domain:
-                    <<: *aci_cred
+                    <<: *aci_login
                     domain: "{{ item.name }}"
                     domain_type: "{{ lookup('vars', 'domain_type_map')[ domain_vars.key ] }}"
                     state: "{{ item.state }}"
@@ -21,7 +21,7 @@
             delegate_to: localhost
 
           - cisco.aci.aci_vlan_pool:
-                    <<: *aci_cred
+                    <<: *aci_login
                     pool: "{{ item.name }}_pool"
                     pool_allocation_mode: "static"
                     state: "{{ item.state }}"
@@ -30,7 +30,7 @@
             delegate_to: localhost
 
           - cisco.aci.aci_domain_to_vlan_pool:
-                    <<: *aci_cred
+                    <<: *aci_login
                     domain: "{{ item.name }}"
                     domain_type: "{{ lookup('vars', 'domain_type_map')[ domain_vars.key ] }}"
                     pool: "{{ item.name }}_pool"
@@ -41,7 +41,7 @@
             delegate_to: localhost
 
           - cisco.aci.aci_vlan_pool_encap_block:
-                    <<: *aci_cred
+                    <<: *aci_login
                     pool: "{{ item.0.name }}_pool"
                     pool_allocation_mode: static
                     block_name: "blockname_{{ item.1.range | regex_search('^\\d+') }}_{{ item.1.range | regex_search('\\d+$') }}"
@@ -56,7 +56,7 @@
 
 - block:
           - cisco.aci.aci_domain:
-                    <<: *aci_cred
+                    <<: *aci_login
                     domain: "{{ item.name }}"
                     domain_type: "{{ lookup('vars', 'domain_type_map')[ domain_vars.key ] }}"
                     vm_provider: "vmware"

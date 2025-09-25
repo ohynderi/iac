@@ -11,7 +11,7 @@
   no_log: true
 
 - aci_vrf:
-    <<: *aci_cred
+    <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
     descr: "{{ vrf_vars.description | default('') }}"
     vrf: "{{ vrf_vars.name }}"

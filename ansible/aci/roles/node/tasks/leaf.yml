@@ -12,15 +12,14 @@
   no_log: true
 
 - cisco.aci.aci_switch_policy_leaf_profile:
-    <<: *aci_cred
+    <<: *aci_login
     leaf_profile: "{{ node_vars.name }}_profile"
     description: "{{ node_vars.description | default('') }}"
     state: "{{ node_vars.state | default('present') }}"
   delegate_to: localhost
 
-
 - cisco.aci.aci_switch_leaf_selector:
-    <<: *aci_cred
+    <<: *aci_login
     leaf_profile: "{{ node_vars.name }}_profile"
     leaf: "{{ node_vars.name }}"
     leaf_node_blk: "blk_{{ node_vars.id }}"
@@ -30,13 +29,13 @@
   delegate_to: localhost
 
 - cisco.aci.aci_interface_policy_leaf_profile:
-    <<: *aci_cred
+    <<: *aci_login
     leaf_interface_profile: "{{ node_vars.name }}_interface"
     state: "{{ node_vars.state | default('present') }}"
   delegate_to: localhost
 
 - cisco.aci.aci_interface_selector_to_switch_policy_leaf_profile:
-    <<: *aci_cred
+    <<: *aci_login
     leaf_profile: "{{ node_vars.name }}_profile"
     interface_selector: "{{ node_vars.name }}_interfaces"
     state: "{{ node_vars.state | default('present') }}"
@@ -47,7 +46,7 @@
   loop: "{{ node_vars.interfaces }}"
 
 - cisco.aci.aci_access_port_to_interface_policy_leaf_profile:
-    <<: *aci_cred
+    <<: *aci_login
     leaf_interface_profile: "{{ node_vars.name }}_interface"
     access_port_selector: "eth_{{ item.card }}_{{ item.port }}"
     interface_type: "{{ intf_pg_map[ item.intf_pol_group ] }}"

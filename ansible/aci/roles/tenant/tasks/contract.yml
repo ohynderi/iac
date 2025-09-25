@@ -11,21 +11,21 @@
   no_log: true
 
 - cisco.aci.aci_contract:
-    <<: *aci_cred
+    <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
     contract: "{{ contract_vars.name }}"
     scope: "context"
   delegate_to: localhost
 
 - cisco.aci.aci_contract_subject:
-    <<: *aci_cred
+    <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
     contract: "{{ contract_vars.name }}"
     subject: "{{ contract_vars.subject }}"
   delegate_to: localhost
 
 - cisco.aci.aci_contract_subject_to_filter:
-    <<: *aci_cred
+    <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
     contract: "{{ contract_vars.name }}"
     subject: "{{ contract_vars.subject }}"

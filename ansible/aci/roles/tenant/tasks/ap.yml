@@ -11,15 +11,14 @@
   no_log: true
 
 - cisco.aci.aci_ap:
-    <<: *aci_cred
+    <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
     ap: "{{ ap_vars.name }}"
     state: "{{ ap_vars.state | default('present') }}"
   delegate_to: localhost
 
-
 - cisco.aci.aci_epg:
-    <<: *aci_cred
+    <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
     ap: "{{ ap_vars.name }}"
     epg: "{{ item.name }}"
@@ -31,7 +30,7 @@
   delegate_to: localhost
 
 - cisco.aci.aci_epg_to_domain:
-    <<: *aci_cred
+    <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
     ap: "{{ ap_vars.name }}"
     epg: "{{ item.name }}"
@@ -42,9 +41,8 @@
     label: "{{ [ tenant_vars.name, item.name, item.domain ] | join('/') }}"
   delegate_to: localhost
 
-
 - cisco.aci.aci_static_binding_to_epg:
-    <<: *aci_cred
+    <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
     ap: "{{  ap_vars.name }}"
     epg: "{{ item.0.name }}"
@@ -60,4 +58,3 @@
   loop_control:
     label: "{{ [ tenant_vars.name, item.0.name, item.1.name ] | join('/') }}"
   delegate_to: localhost
-
