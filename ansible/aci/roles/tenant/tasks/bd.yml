@@ -14,7 +14,7 @@
     <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
     vrf: "{{ bd_vars.name }}"
-    bd: "{{ bd_vars.name }}"
+    bd: "{{ vrf_vars.name }}"
     state: "{{ bd_vars.state | default( [] ) }}"
   delegate_to: localhost
 

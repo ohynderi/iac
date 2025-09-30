@@ -43,6 +43,14 @@
     label: "{{ [ tenant_vars.name, ap_vars.name ] | join('/') }}"
   when: tenant_present
 
+- name: Import l3out tasks
+  include_tasks: l3out.yml
+  loop: '{{ tenant_vars.l3outs | default( [] ) }}'
+  loop_control:
+    loop_var: l3out_vars
+    label: "{{ [ tenant_vars.name, l3out_vars.name ] | join('/') }}"
+  when: tenant_present
+
 - name: Import contract tasks
   include_tasks: contract.yml
   loop: '{{ tenant_vars.contracts | default( [] ) }}'

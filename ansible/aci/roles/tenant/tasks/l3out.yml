@@ -1,0 +1,92 @@
+---
+- set_fact:
+    aci_cred: &aci_login
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      use_proxy: no
+      use_ssl: yes
+      validate_certs: no
+      annotation: orchestrator:ansible
+  no_log: true
+
+- name: "'{{ tenant_vars.name }}'/'{{ l3out_vars.name }}'"
+  cisco.aci.aci_l3out:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    vrf: "{{ vrf_vars.name }}"
+    name: "{{ l3out_vars.name }}"
+    domain: "{{ l3out_vars.domain }}"
+    route_control: "{{ l3out_vars.route_control }}"
+    l3protocol: "{{ l3out_vars.proto }}"
+    state: "{{ l3out_vars.state }}"
+
+- name: "'{{ tenant_vars.name }}'/'{{ l3out_vars.name }}'/'{{ node_prof_vars.name }}'"
+  cisco.aci.aci_l3out_logical_node_profile:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    l3out: "{{ l3out_vars.name }}"
+    node_profile: "{{ node_prof_vars.name }}"
+    state: "{{ node_prof_vars.state }}"
+  loop: "{{ l3out_vars.node_profiles | default( [] ) }}"
+  loop_control:
+    loop_var: node_prof_vars
+    label: "{{ [ tenant_vars.name, l3out_vars.name, node_prof_vars.name ] | join('/') }}"
+  delegate_to: localhost
+
+- name: "'{{ tenant_vars.name }}'/'{{ l3out_vars.name }}'/'{{ node_prof_vars.name }}'/'{{ node_vars.node_id }}'"
+  cisco.aci.aci_l3out_logical_node:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    l3out: "{{ l3out_vars.name }}"
+    node_profile: "{{ node_prof_vars.name }}"
+    pod_id: "{{ node_vars.pod_id }}"
+    node_id: "{{ node_vars.node_id }}"
+    router_id: "{{ node_vars.router_id }}"
+    router_id_as_loopback: "{{ node_vars.router_id_as_loopback }}"
+    state: "{{ node_vars.state }}"
+  loop: "{{ ( l3out_vars.node_profiles | default( [] )) | subelements('nodes', skip_missing=True) }}"
+  loop_control:
+    loop_var: node_loop_element
+  vars:
+    node_prof_vars: "{{ node_loop_element.0 }}"
+    node_vars: "{{ node_loop_element.1 }}"
+
+- name: "Configure interfaces in the Interface Profile"
+  cisco.aci.aci_l3out_interface:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    l3out: "{{ l3out_vars.name }}"
+    node_profile: "{{  node_prof_vars.name }}"
+    interface_profile: "{{ intf_prof_vars.var }}"
+    pod_id: "{{ intf_prof_vars.pod_id }}"
+    node_id: "{{ intf_prof_vars.node_id }}"
+    path_ep: "{{ intf_prof_vars.if_path }}"
+    interface_type: "{{ intf_prof_vars.if_type }}"
+    mode: "{{ intf_prof_vars.if_mode }}"
+    encap: "{{ intf_prof_vars.encap | default(omit) }}" # not required for l3-port
+    addr: "{{ intf_prof_vars.addr }}"
+    mtu: "{{ intf_prof_vars.mtu }}"
+    state: "{{ intf_prof_vars.state }}"
+  loop: "{{ ( l3out_vars.node_profiles | default( [] )) | subelements('interface_profiles', skip_missing=True) }}"
+  loop_control:
+    loop_var: intf_prof_loop_element
+  vars:
+    intf_prof_vars: "{{ intf_prof_loop_element.0 }}"
+    node_vars: "{{ intf_prof_loop_element.1 }}"
+
+- name: "Create BGP Peer Connectivity Profiles under Interface Profile `{{ l3out.if_profile }}`"
+  cisco.aci.aci_l3out_bgp_peer:
+    <<: *aci_login
+    tenant: "{{ tenant }}"
+    l3out: "{{ l3out.name }}"
+    node_profile: "{{ l3out.node_profile }}"
+    interface_profile: "{{ l3out.if_profile }}"
+    pod_id: "{{ item.0.pod_id }}"
+    node_id: "{{ item.0.node_id }}"
+    path_ep: "{{ item.0.if_path }}"
+    peer_ip: "{{ item.1.peer_ip }}"
+    remote_asn: "{{ item.1.remote_asn }}"
+    ttl: "{{ item.1.ttl }}"
+    state: "{{ state }}"
+  loop: '{{ l3out.interfaces | subelements("bgp_peers") }}'
