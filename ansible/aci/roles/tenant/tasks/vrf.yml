@@ -10,9 +10,25 @@
       annotation: orchestrator:ansible
   no_log: true
 
-- aci_vrf:
+- name: "'{{ tenant_vars.name }}'/'{{ vrf_vars.name }}'"
+  aci_vrf:
     <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
     descr: "{{ vrf_vars.description | default('') }}"
     vrf: "{{ vrf_vars.name }}"
     state: "{{ vrf_vars.state | default('present') }}"
+    delegate_to: localhost
+
+- name: "'{{ tenant_vars.name }}'/'{{ vrf_vars.name }}'/'{{ vzany_contract_var.name }}'"
+  cisco.aci.aci_vzany_to_contract:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    vrf: "{{ l3out_vars.name }}"
+    contract: "{{ vzany_contract_var.name }}"
+    type: "{{ vzany_contract_var.type }}"
+    state: "{{ node_prof_vars.state }}"
+  loop: "{{ vrf_vars.contracts | default( [] ) }}"
+  loop_control:
+    loop_var: vzany_contract_var
+    label: "{{ [ tenant_vars.name, vrf_vars.name, vzany_contract_var.name ] | join('/') }}"
+  delegate_to: localhost
