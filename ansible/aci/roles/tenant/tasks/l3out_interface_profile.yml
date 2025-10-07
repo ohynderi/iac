@@ -1,0 +1,66 @@
+---
+- set_fact:
+    aci_cred: &aci_login
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      use_proxy: no
+      use_ssl: yes
+      validate_certs: no
+      annotation: orchestrator:ansible
+  no_log: true
+
+- name: "`{{ l3out.name }}`/`{{ node_prof_vars.name }}`/`{{ intf_prof_vars.name }}`"
+  cisco.aci.aci_l3out_logical_interface_profile:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    l3out: "{{ l3out_vars.name }}"
+    node_profile: "{{ node_prof_vars.name }}"
+    interface_profile: "{{ intf_prof_vars.name }}"
+    state: "{{ intf_prof_vars.state }}"
+  delegate_to: localhost
+
+- name: "`{{ l3out.name }}`/`{{ node_prof_vars.name }}`/`{{ intf_prof_vars.name }}`/`{{ interface_vars.if_path }}`"
+  cisco.aci.aci_l3out_interface:
+    <<: *aci_login
+    tenant: "{{ tenant_vars.name }}"
+    l3out: "{{ l3out_vars.name }}"
+    node_profile: "{{  node_prof_vars.name }}"
+    interface_profile: "{{ intf_prof_vars.name }}"
+    pod_id: "{{ interface_vars.pod_id }}"
+    node_id: "{{ interface_vars.node_id }}"
+    path_ep: "{{ interface_vars.if_path }}"
+    interface_type: "{{ interface_vars.if_type }}"
+    mode: "{{ interface_vars.if_mode }}"
+    encap: "{{ interface_vars.encap | default(omit) }}" # not required for l3-port
+    addr: "{{ interface_vars.addr }}"
+    mtu: "{{ interface_vars.mtu }}"
+    state: "{{ interface_vars.state }}"
+  loop: "{{ ( intf_prof_vars.interfaces | default( [] )) }}"
+  loop_control:
+    loop_var: interface_vars
+    label: "{{ [ tenant_vars.name, node_prof_vars.name, intf_prof_vars.node ] | join('/') }}"
+  delegate_to: localhost
+
+- name: "`{{ l3out.name }}`/`{{ node_prof_vars.name }}`/`{{ intf_prof_vars.name }}`/`{{ bgp_vars.peer_ip }}`"
+  cisco.aci.aci_l3out_bgp_peer:
+    <<: *aci_login
+    tenant: "{{ tenant }}"
+    l3out: "{{ l3out.name }}"
+    node_profile: "{{ node_prof_vars.name }}"
+    interface_profile: "{{ intf_prof_vars.name }}"
+    pod_id: "{{ interface_vars.pod_id }}"
+    node_id: "{{ interface_vars.node_id }}"
+    path_ep: "{{ interface_vars.if_path }}"
+    peer_ip: "{{ bgp_vars.peer_ip }}"
+    remote_asn: "{{ bgp_vars.remote_asn }}"
+    ttl: "{{ bgp_vars.ttl }}"
+    state: "{{ bgp_vars.state }}"
+  loop: "{{ ( intf_prof_vars.interfaces | default( [] )) | subelements('bgp_peers', skip_missing=True) }}"
+  loop_control:
+    loop_var: intf_prof_loop_element
+    label: "{{ [ tenant_vars.name, node_prof_vars.name, node_vars.node_id ] | join('/') }}"
+  vars:
+    interface_vars: "{{ intf_prof_loop_element.0 }}"
+    bgp_vars: "{{ intf_prof_loop_element.1 }}"
+  delegate_to: localhost
