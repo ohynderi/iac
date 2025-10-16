@@ -1,6 +1,6 @@
 ---
 - set_fact:
-    intf_to_leaf_map: "{{ intf_to_leaf_map | combine({ intf_vars.intf_pol_group : { 'port': [ item.card, item.port ] | join('/'), 'leaf': node_vars.id } }) }}"
+    intf_to_leaf_map: "{{ intf_to_leaf_map | combine({ intf_vars.intf_pol_group : { 'port': [ intf_vars.card, intf_vars.port ] | join('/'), 'leaf': node_vars.id } }) }}"
   loop: "{{ ( nodes | default( [] )) | subelements('interfaces', skip_missing=True) }}"
   loop_control:
     loop_var: node_intf_pair
