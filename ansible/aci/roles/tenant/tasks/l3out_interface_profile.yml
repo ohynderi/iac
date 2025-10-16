@@ -59,7 +59,7 @@
   loop: "{{ ( intf_prof_vars.interfaces | default( [] )) | subelements('bgp_peers', skip_missing=True) }}"
   loop_control:
     loop_var: intf_prof_loop_element
-    label: "{{ [ tenant_vars.name, node_prof_vars.name, node_vars.node_id ] | join('/') }}"
+    label: "{{ [ tenant_vars.name, node_prof_vars.name, bgp_vars.peer_ip ] | join('/') }}"
   vars:
     interface_vars: "{{ intf_prof_loop_element.0 }}"
     bgp_vars: "{{ intf_prof_loop_element.1 }}"
