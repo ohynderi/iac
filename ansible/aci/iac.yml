@@ -46,7 +46,7 @@
     - name: Apply tenant role to each tenant
       include_role:
         name: tenant
-      loop: "{{ tenants }}"
+      loop: "{{ tenants | default( [] ) }}"
       loop_control:
         loop_var: tenant_vars
         label: "{{ tenant_vars.name }}"
