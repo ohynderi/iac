@@ -20,6 +20,7 @@
     route_control: "{{ l3out_vars.route_control }}"
     l3protocol: "{{ l3out_vars.proto }}"
     state: "{{ l3out_vars.state }}"
+  delegate_to: localhost
 
 - name: "'{{ tenant_vars.name }}'/'{{ l3out_vars.name }}'/'{{ node_prof_vars.name }}'"
   cisco.aci.aci_l3out_logical_node_profile:

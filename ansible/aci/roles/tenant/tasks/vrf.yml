@@ -17,7 +17,7 @@
     descr: "{{ vrf_vars.description | default('') }}"
     vrf: "{{ vrf_vars.name }}"
     state: "{{ vrf_vars.state | default('present') }}"
-    delegate_to: localhost
+  delegate_to: localhost
 
 - name: "'{{ tenant_vars.name }}'/'{{ vrf_vars.name }}'/'{{ vzany_contract_var.name }}'"
   cisco.aci.aci_vzany_to_contract:
