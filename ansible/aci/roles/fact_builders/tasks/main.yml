@@ -1,0 +1,7 @@
+---
+- name: Import intf_to_leap_map_builder
+  include_tasks: builder_intf_to_leaf_map.yml
+
+- name: Print intf_to_leap_map
+  debug:
+    var: intf_to_leaf_map
