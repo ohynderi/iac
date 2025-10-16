@@ -11,6 +11,9 @@
       validate_certs: no
       annotation: orchestrator:ansible
 
+- debug:
+    var: aci_login
+
 - name: Create tenant
   aci_tenant:
     <<: *aci_login
