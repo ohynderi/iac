@@ -14,7 +14,7 @@
   cisco.aci.aci_l3out:
     <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
-    vrf: "{{ vrf_vars.name }}"
+    vrf: "{{ l3out_vars.name }}"
     name: "{{ l3out_vars.name }}"
     domain: "{{ l3out_vars.domain }}"
     route_control: "{{ l3out_vars.route_control }}"
