@@ -16,3 +16,7 @@
   vars:
     node_vars: "{{ node_intf_pair.0 }}"
     intf_vars: "{{ node_intf_pair.1 }}"
+
+- name: Print intf_to_leap_map
+  debug:
+    var: intf_to_leaf_map
