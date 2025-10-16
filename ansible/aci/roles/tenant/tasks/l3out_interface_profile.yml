@@ -39,7 +39,7 @@
   loop: "{{ ( intf_prof_vars.interfaces | default( [] )) }}"
   loop_control:
     loop_var: interface_vars
-    label: "{{ [ tenant_vars.name, node_prof_vars.name, intf_prof_vars.node ] | join('/') }}"
+    label: "{{ [ tenant_vars.name, node_prof_vars.name, interface_vars.node_id ] | join('/') }}"
   delegate_to: localhost
 
 - name: "`{{ l3out.name }}`/`{{ node_prof_vars.name }}`/`{{ intf_prof_vars.name }}`/`{{ bgp_vars.peer_ip }}`"
