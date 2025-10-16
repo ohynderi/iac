@@ -46,7 +46,7 @@
   cisco.aci.aci_l3out_bgp_peer:
     <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
-    l3out: "{{ l3out.name }}"
+    l3out: "{{ l3out_vars.name }}"
     node_profile: "{{ node_prof_vars.name }}"
     interface_profile: "{{ intf_prof_vars.name }}"
     pod_id: "{{ interface_vars.pod_id }}"
