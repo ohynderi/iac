@@ -1,0 +1,42 @@
+---
+- set_fact:
+    intf_to_leaf_map: >-
+      {{
+        intf_to_leaf_map | combine({
+          intf_vars.intf_pol_group: {
+            'port': [intf_vars.card, intf_vars.port] | join('/'),
+            'leaf': node_vars.id
+          }
+        })
+      }}
+
+  loop: "{{ ( nodes | default( [] )) | subelements('interfaces', skip_missing=True) }}"
+  loop_control:
+    loop_var: node_intf_pair
+  vars:
+    node_vars: "{{ node_intf_pair.0 }}"
+    intf_vars: "{{ node_intf_pair.1 }}"
+
+- name: Print intf_to_leap_map
+  debug:
+    var: intf_to_leaf_map
+
+- set_fact:
+    intf_pg_map: >-
+      {{
+        intf_pg_map | combine({
+          ipg_vars.name: {
+              'switch_port' if ipg_vars.type == 'access' else
+              'vpc' if ipg_vars.type == 'vpc' else
+              'port_channel' if ipg_vars.type == 'po' else
+          }
+        })
+      }}
+
+  loop: "{{ ( intf_policy_groups | default( [] )) }}"
+  loop_control:
+    loop_var: ipg_vars
+
+- name: Print intf_pg_map
+  debug:
+    var: intf_pg_map
