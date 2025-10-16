@@ -27,13 +27,13 @@
     label: "{{ [ tenant_vars.name, vrf_vars.name ] | join('/') }}"
   when: tenant_present
 
-- name: Import bd tasks
-  include_tasks: bd.yml
-  loop: '{{ tenant_vars.bridge_domains | default( [] ) }}'
-  loop_control:
-    loop_var: bd_vars
-    label: "{{ [ tenant_vars.name, bd_vars.name ] | join('/') }}"
-  when: tenant_present
+# - name: Import bd tasks
+#   include_tasks: bd.yml
+#   loop: '{{ tenant_vars.bridge_domains | default( [] ) }}'
+#   loop_control:
+#     loop_var: bd_vars
+#     label: "{{ [ tenant_vars.name, bd_vars.name ] | join('/') }}"
+#   when: tenant_present
 
 - name: Import ap tasks
   include_tasks: ap.yml
