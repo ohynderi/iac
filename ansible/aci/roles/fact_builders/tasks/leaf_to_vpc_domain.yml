@@ -1,20 +1,20 @@
 - set_fact:
     leaf_to_vpc_domain_map: "{{ leaf_to_vpc_domain_map | combine({ node_vars.id : [ node_vars.id, node_vars.vpc_peer_id ] | join('-') }) }}"
-    when:
-      - node_vars.vpc_peer_id is defined
-      - node_vars.vpc_peer_id not in leaf_to_vpc_domain_map
     loop: "{{ ( nodes | default( [] )) }}"
     loop_control:
       loop_var: node_vars
+    when:
+      - node_vars.vpc_peer_id is defined
+      - node_vars.vpc_peer_id not in leaf_to_vpc_domain_map
 
 - set_fact:
     leaf_to_vpc_domain_map: "{{ leaf_to_vpc_domain_map | combine({ node_vars.id : [ node_vars.vpc_peer_id, node_vars.id ] | join('-') }) }}"
+    loop_control:
+      loop_var: node_vars
     when:
       - node_vars.vpc_peer_id is defined
       - node_vars.vpc_peer_id in leaf_to_vpc_domain_map
     loop: "{{ ( nodes | default( [] )) }}"
-    loop_control:
-      loop_var: node_vars
 
 - name: Print leaf_to_vpc_domain_map
   debug:
