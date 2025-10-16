@@ -23,7 +23,7 @@
   cisco.aci.aci_vzany_to_contract:
     <<: *aci_login
     tenant: "{{ tenant_vars.name }}"
-    vrf: "{{ l3out_vars.name }}"
+    vrf: "{{  vrf_vars.name }}"
     contract: "{{ vzany_contract_var.name }}"
     type: "{{ vzany_contract_var.type }}"
     state: "{{ node_prof_vars.state }}"
