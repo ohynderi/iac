@@ -26,7 +26,7 @@
     vrf: "{{  vrf_vars.name }}"
     contract: "{{ vzany_contract_var.name }}"
     type: "{{ vzany_contract_var.type }}"
-    state: "{{ node_prof_vars.state }}"
+    state: "{{ vzany_contract_var.state }}"
   loop: "{{ vrf_vars.contracts | default( [] ) }}"
   loop_control:
     loop_var: vzany_contract_var
