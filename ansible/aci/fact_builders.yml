@@ -25,11 +25,10 @@
     intf_pg_map: >-
       {{
         intf_pg_map | combine({
-          ipg_vars.name: {
-              'switch_port' if ipg_vars.type == 'access' else
+          ipg_vars.name:
               'vpc' if ipg_vars.type == 'vpc' else
               'port_channel' if ipg_vars.type == 'po' else
-          }
+              'switch_port'
         })
       }}
 
