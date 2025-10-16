@@ -33,7 +33,7 @@
         })
       }}
 
-  loop: "{{ ( intf_policy_groups | default( [] )) }}"
+  loop: "{{ ( fabric.intf_policy_groups | default( [] )) }}"
   loop_control:
     loop_var: ipg_vars
 
