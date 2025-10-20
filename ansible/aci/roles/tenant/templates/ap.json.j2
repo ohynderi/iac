@@ -1,0 +1,28 @@
+{
+  "fvAp": {
+    "attributes": {
+      "name": "{{ ap.name }}",
+      "status": "{{ 'deleted' if ap.state == 'absent' else 'created,modified' }}"
+      {% if ap.state == 'present' %}
+      ,
+      "descr": "{{ ap.description | default('') }}"
+      {% endif %}
+    }
+    {% if ap.state == 'present' and ap.tags is defined and ap.tags | length > 0 %}
+    ,
+    "children": [
+      {% for tag in ap.tags %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+    {% endif %}
+  }
+}

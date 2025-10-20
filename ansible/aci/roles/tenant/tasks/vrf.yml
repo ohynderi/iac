@@ -18,6 +18,8 @@
     vrf: "{{ vrf_vars.name }}"
     state: "{{ vrf_vars.state }}"
 
+  when: 
+    - vrf_vars.state is present
   delegate_to: localhost
 
 - name: "{{ tenant_vars.name }}/{{ vrf_vars.name }} vzAny contracts"

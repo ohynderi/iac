@@ -1,0 +1,64 @@
+---
+- set_fact:
+    aci_cred: &aci_login
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      use_proxy: no
+      use_ssl: yes
+      validate_certs: no
+      annotation: orchestrator:ansible
+  no_log: true
+
+- aci_rest:
+    <<: *aci_login
+    method: post
+    path: "/api/mo/uni/tn-{{ tenant.name}}/ap-{{ ap.name }}.json"
+    content: "{{ lookup('template', 'epg.json.j2') | from_yaml | to_json }}"
+
+  loop: "{{ query('subelements', tenant.application_profiles | default([]), 'epgs', {'skip_missing': True}) }}"
+  loop_control:
+    loop_var: ap_epg_pair
+    label: "{{ [ tenant.name, ap.name, epg.name ] | join('/') }}"
+  vars:
+    ap: "{{ ap_epg_pair.0 }}"
+    epg: "{{ ap_epg_pair.1 }}"
+  when:
+    - epg.state is defined
+    - ( ap.state is defined and ap.state != 'absent' ) or ap.state is not defined
+  delegate_to: localhost
+
+# - cisco.aci.aci_epg_to_domain:
+#     <<: *aci_login
+#     tenant: "{{ tenant_vars.name }}"
+#     ap: "{{ ap_vars.name }}"
+#     epg: "{{ item.name }}"
+#     domain: "{{ item.domain | default( [] ) }}"
+#     domain_type: phys
+
+#   var: 
+#     ap_epg_pairs: "{{ query('subelements', application_profiles, 'epgs') }}"
+#     ap_epg_dom_triples: "{{ query('subelements', ap_epg_pairs, '1.', {'skip_missing': True}) }}"
+
+#   loop: "{{ ap_vars.epgs }}"
+#   loop_control:
+#     label: "{{ [ tenant_vars.name, item.name, item.domain ] | join('/') }}"
+#   delegate_to: localhost
+
+# - cisco.aci.aci_static_binding_to_epg:
+#     <<: *aci_login
+#     tenant: "{{ tenant_vars.name }}"
+#     ap: "{{  ap_vars.name }}"
+#     epg: "{{ item.0.name }}"
+#     encap_id: "{{ item.1.vlan }}"
+#     deploy_immediacy: "lazy"
+#     interface_mode: "{{ item.1.mode }}"
+#     interface_type: "{{ intf_pg_map[ item.1.name ] }}"
+#     pod_id: "1"
+#     leafs: "{{ intf_to_leaf_map[ item.1.name ][ 'leaf' ] if intf_pg_map[ item.1.name ] != 'vpc' else leaf_to_vpc_domain_map[ intf_to_leaf_map[ item.1.name ]['leaf'] ] }}"
+#     interface: "{{ intf_to_leaf_map[ item.1.name ][ 'port' ] if intf_pg_map[ item.1.name ] == 'access' else item.1.name }}"
+#     state: "{{ item.1.state | default('present') }}"
+#   loop: "{{ query('subelements', ap_vars.epgs, 'interfaces') }}"
+#   loop_control:
+#     label: "{{ [ tenant_vars.name, item.0.name, item.1.name ] | join('/') }}"
+#   delegate_to: localhost

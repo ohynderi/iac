@@ -1,0 +1,36 @@
+{
+  "fvAEPg": {
+    "attributes": {
+      "name": "{{ epg.name }}",
+      "status": "{{ 'deleted' if epg.state == 'absent' else 'created,modified' }}"
+      {% if epg.state == 'present' %},
+      "descr": "{{ epg.description | default('') }}"
+      {% endif %}
+    }
+    {% if epg.state == 'present' %}
+    ,
+    "children": [
+      {
+        "fvRsBd": {
+          "attributes": {
+            "tnFvBDName": "{{ epg.bd }}",
+            "status": "created,modified"
+          }
+        }
+      }
+      {% for tag in epg.tags | default( [] ) %}
+      ,
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+    {% endif %}
+  }
+}

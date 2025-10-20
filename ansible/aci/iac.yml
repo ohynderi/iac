@@ -48,5 +48,5 @@
         name: tenant
       loop: "{{ tenants | default( [] ) }}"
       loop_control:
-        loop_var: tenant_vars
-        label: "{{ tenant_vars.name }}"
+        loop_var: tenant
+        label: "{{ tenant.name }}"
