@@ -11,35 +11,35 @@
       annotation: orchestrator:ansible
 
 
-- name: Create tenant
-  aci_tenant:
-    <<: *aci_login
-    tenant: '{{ tenant.name }}'
-    description: '{{ tenant.description | default(omit) }}'
-    state: "{{ tenant.state }}"
-  when:
-    - tenant.state is defined
-  delegate_to: localhost
+# - name: Create tenant
+#   aci_tenant:
+#     <<: *aci_login
+#     tenant: '{{ tenant.name }}'
+#     description: '{{ tenant.description | default(omit) }}'
+#     state: "{{ tenant.state }}"
+#   when:
+#     - tenant.state is defined
+#   delegate_to: localhost
 
-- name: Import vrf tasks
-  include_tasks: vrf.yml
-  when:
-    - tenant_present
+# - name: Import vrf tasks
+#   include_tasks: vrf.yml
+#   when:
+#     - tenant_present
 
 # - name: Import bd tasks
 #   include_tasks: bd.yml
 #   when: 
 #     - tenant_present
 
-# - name: Import ap tasks
-#   include_tasks: ap.yml
-#   when:
-#     - tenant_present
+- name: Import ap tasks
+  include_tasks: ap.yml
+  when:
+    - tenant_present
 
-# - name: Import epg tasks
-#   include_tasks: epg.yml
-#   when:
-#     - tenant_present
+- name: Import epg tasks
+  include_tasks: epg.yml
+  when:
+    - tenant_present
 
 
 # - name: Import l3out tasks

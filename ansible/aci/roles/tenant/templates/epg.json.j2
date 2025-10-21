@@ -18,6 +18,7 @@
           }
         }
       }
+
       {% for tag in epg.tags | default( [] ) %}
       ,
       {
@@ -28,8 +29,51 @@
             "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
           }
         }
-      }{% if not loop.last %},{% endif %}
+      }
       {% endfor %}
+
+      {% for domain in epg.domains | default( [] ) %}
+      ,
+      {
+        "fvRsDomAtt": {
+          "attributes": {
+            "resImedcy": "pre-provision",
+            {% if domain.type == 'phy' %}
+            "tDn": "uni/phys-{{ domain.name }}",
+            {% else %}
+            "tDn": "uni/vmmp-VMware/dom-{{ domain.name }}",
+            "instrImedcy": "immediate",
+            {% endif %}
+
+            "status": "{{ 'deleted' if domain.state is defined and domain.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% endfor %}
+
+      {% for intf in epg.interfaces | default( [] ) %}
+      ,
+      {
+        "fvRsPathAtt": {
+          "attributes": {
+            "instrImedcy": "immediate",
+            "encap": "vlan-{{ intf.vlan }}",
+            "mode": "{{ intf.mode }}",
+
+            {% if intf.port is defined and intf.leaf_id is defined %}
+            "tDn": "topology/pod-{{ intf.pod }}/paths-{{ intf.leaf_id }}/pathep-[{{ intf.port | lower }}]",
+            {% elif intf.ipg is defined and intf.leaf_id is defined %}
+            "tDn": "topology/pod-{{ intf.pod }}/paths-{{ intf.leaf_id }}/pathep-[{{ intf.ipg }}]",
+            {% elif intf.ipg is defined and intf.leaf_id is defined and intf.peer_leaf_id %}
+            "tDn": "topology/pod-{{ intf.pod }}/protpaths-{{ intf.leaf_id }}-{{ intf.peer_leaf_id }}/pathep-[{{ intf.ipg }}]",
+            {% endif %}
+
+            "status": "{{ 'deleted' if domain.state is defined and domain.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% endfor %}
+
     ]
     {% endif %}
   }
