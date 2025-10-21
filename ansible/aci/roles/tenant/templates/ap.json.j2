@@ -20,7 +20,8 @@
             "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
           }
         }
-      }{% if not loop.last %},{% endif %}
+      }
+      {% if not loop.last %},{% endif %}
       {% endfor %}
     ]
     {% endif %}

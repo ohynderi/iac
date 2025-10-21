@@ -1,0 +1,45 @@
+{
+  "l3extOut": {
+    "attributes": {
+      "name": "{{ l3out.name }}"
+    },
+    "children": [
+      {% for epg in l3out.external_epgs | default( [] ) %}
+      {
+        "l3extInstP":{
+          "attributes":{
+            "name": "{{ epg.name }}",
+            "descr": "{{ epg.description | default('') }}",
+            "status": "{{ 'deleted' if epg.state is defined and epg.state == 'absent' else 'created,modified' }}"
+          },
+          "children": [
+            {% for subnet in epg.subnets | default( [] ) %}
+            {
+              "l3extSubnet":{
+                "attributes":{
+                  "ip": "{{ subnet.ip }}",
+                  "aggregate": "{{ [ 
+                        'export-rtctrl' if subnet.agg_export|default(False) else None,
+                        'inport-rtctrl' if subnet.agg_inport|default(False) else None, 
+                        'shared-rtctrl' if subnet.agg_shared|default(False) else None
+                    ] | select | join(',') }}",
+                  "scope": "{{ [ 
+                        'export-rtctrl' if subnet.export_route_ctrl|default(False) else None,
+                        'import-security' if subnet.external_epg|default(False) else None, 
+                        'shared-rtctrl' if subnet.shared_route_ctrl|default(False) else None,
+                        'shared-security' if subnet.shared_security_import|default(False) else None,
+                    ] | select | join(',') }}",
+                  "status": "{{ 'deleted' if subnet.state is defined and subnet.state == 'absent' else 'created,modified' }}"
+                }
+              }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+          ]
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+  }
+}

@@ -10,57 +10,29 @@
       annotation: orchestrator:ansible
   no_log: true
 
-- name: "'{{ tenant_vars.name }}'/'{{ l3out_vars.name }}'"
-  cisco.aci.aci_l3out:
+- aci_rest:
     <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    vrf: "{{ l3out_vars.name }}"
-    name: "{{ l3out_vars.name }}"
-    domain: "{{ l3out_vars.domain }}"
-    route_control: "{{ l3out_vars.route_control }}"
-    l3protocol: "{{ l3out_vars.proto }}"
-    state: "{{ l3out_vars.state }}"
+    method: post
+    path: "/api/mo/uni/tn-{{ tenant.name }}.json"
+    content: "{{ lookup('template', 'l3out.json.j2') | from_yaml | to_json }}"
   delegate_to: localhost
+  loop: "{{ tenant.l3outs | default([]) }}"
+  loop_control:
+    loop_var: l3out
+    label: "{{ [ tenant.name, l3out.name ] | join('/') }}"
+  when:
+    - l3out.state is defined
 
-- name: "'{{ tenant_vars.name }}'/'{{ l3out_vars.name }}'/'{{ node_prof_vars.name }}'"
-  cisco.aci.aci_l3out_logical_node_profile:
+- name: L3Out External EPG 
+  aci_rest:
     <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    l3out: "{{ l3out_vars.name }}"
-    node_profile: "{{ node_prof_vars.name }}"
-    state: "{{ node_prof_vars.state }}"
-  loop: "{{ l3out_vars.node_profiles | default( [] ) }}"
-  loop_control:
-    loop_var: node_prof_vars
-    label: "{{ [ tenant_vars.name, l3out_vars.name, node_prof_vars.name ] | join('/') }}"
+    method: post
+    path: "/api/mo/uni/tn-{{ tenant.name }}.json"
+    content: "{{ lookup('template', 'l3out_ext_epg.json.j2')   }}"
   delegate_to: localhost
-
-- name: "'{{ tenant_vars.name }}'/'{{ l3out_vars.name }}'/'{{ node_prof_vars.name }}'/'{{ node_vars.node_id }}'"
-  cisco.aci.aci_l3out_logical_node:
-    <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    l3out: "{{ l3out_vars.name }}"
-    node_profile: "{{ node_prof_vars.name }}"
-    pod_id: "{{ node_vars.pod_id }}"
-    node_id: "{{ node_vars.node_id }}"
-    router_id: "{{ node_vars.router_id }}"
-    router_id_as_loopback: "{{ node_vars.router_id_as_loopback }}"
-    state: "{{ node_vars.state }}"
-  loop: "{{ ( l3out_vars.node_profiles | default( [] )) | subelements('nodes', skip_missing=True) }}"
+  loop: "{{ tenant.l3outs | default([]) }}"
   loop_control:
-    loop_var: node_loop_element
-    label: "{{ [ tenant_vars.name, node_prof_vars.name, node_vars.node_id ] | join('/') }}"
-  vars:
-    node_prof_vars: "{{ node_loop_element.0 }}"
-    node_vars: "{{ node_loop_element.1 }}"
-  delegate_to: localhost
-
-- name: Import L3Out Interface Profile Tasks
-  include_tasks: l3out_interface_profile.yml
-  loop: "{{ ( l3out_vars.node_profiles | default( [] )) | subelements('interface_profiles', skip_missing=True) }}"
-  loop_control:
-    loop_var: node_loop_element
-    label: "{{ [ tenant_vars.name, node_prof_vars.name, intf_prof_vars.name ] | join('/') }}"
-  vars:
-    node_prof_vars: "{{ node_loop_element.0 }}"
-    intf_prof_vars: "{{ node_loop_element.1 }}"
+    loop_var: l3out
+    label: "{{ [ tenant.name, l3out.name ] | join('/') }}"
+  when:
+    - l3out.state is defined

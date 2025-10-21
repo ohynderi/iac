@@ -1,0 +1,158 @@
+{
+  "l3extOut": {
+    "attributes": {
+      "name": "{{ l3out.name }}",
+      "status": "{{ 'deleted' if l3out.state == 'absent' else 'created,modified' }}"
+      {% if l3out.state == 'present' %}
+      ,
+      "descr": "{{ l3out.description | default('') }}"
+      {% endif %}
+    }
+    {% if l3out.state == 'present' %}
+    ,
+    "children": [
+      {
+        "l3extRsL3DomAtt":{
+          "attributes":{
+            "tDn":"uni/l3dom-{{ l3out.domain }}"
+          }
+        }
+      },
+      {
+        "l3extRsEctx":{
+          "attributes":{
+            "tnFvCtxName":"{{ l3out.vrf }}"
+          }
+        }
+      }
+
+      {% if l3out.tag|default([])| length > 0 %},{% endif %}
+      {% for tag in l3out.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+      {% if l3out.node_profiles|default([])| length > 0 %},{% endif %}
+      {% for nprof in l3out.node_profiles | default( [] ) %}
+      {
+        "l3extLNodeP": {
+          "attributes": {
+            "name": "{{ nprof.name }}",
+            "status": "{{ 'deleted' if nprof.state is defined and nprof.state == 'absent' else 'created,modified' }}"
+          },
+          "children": [
+            {% for router in nprof.routers | default( [] ) %}
+            {
+              "l3extRsNodeL3OutAtt": {
+                "attributes": {
+                  "tDn": "topology/pod-{{ router.pod }}/node-{{ router.leaf_id }}",
+                  "rtrId": "{{ router.router_id }}",
+                  "rtrIdLoopBack": "{{ 'yes' if router.loopback else 'no' }}",
+                  "status": "{{ 'deleted' if router.state is defined and router.state == 'absent' else 'created,modified' }}"
+                },
+                "children": [
+                  {% for route in nprof.static_routes | default( [] ) %}
+                  {
+                    "ipRouteP": {
+                      "attributes": {
+                        "ip": "{{ route.prefix }}",
+                        "status": "{{ 'deleted' if route.state is defined and route.state == 'absent' else 'created,modified' }}"
+                      },
+                      "children": [
+                          {
+                            "ipNexthopP": {
+                              "attributes": {
+                                "nhAddr": "{{ route.nhop }}",
+                                "status": "{{ 'deleted' if route.state is defined and route.state == 'absent' else 'created,modified' }}"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                  {% if not loop.last %},{% endif %}
+                  {% endfor %}
+                ]
+              }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+
+            {% if nprof.routers|default([])|length > 0 and nprof.interface_profiles|default([])|length > 0 %},{% endif %}
+
+            {% for iprof in nprof.interface_profiles | default( [] ) %}
+            {
+              "l3extLIfP": {
+                "attributes": {
+                  "name": "{{ nprof.name }}",
+                  "status": "{{ 'deleted' if iprof.state is defined and iprof.state == 'absent' else 'created,modified' }}"
+                },
+                "children": [
+                  {% for intf in iprof.interfaces | default( [] ) %}
+                  {
+                    "l3extRsPathL3OutAtt": {
+                      "attributes": {
+                        "addr": "{{ intf.addr if intf.peer_leaf_id is not defined else '0.0.0.0' }}",
+                        {% if intf.type | lower != 'l3-port' %}
+                        "encap": "vlan-{{ intf.vlan }}",
+                        {% endif %}
+                        "mode": "{{ intf.mode }}",
+                        "ifInstT": "{{ intf.type }}",
+
+                        {% if intf.port is defined %}
+                        "tDn": "topology/pod-{{ intf.pod }}/paths-{{ intf.leaf_id }}/pathep-[{{ intf.port }}]",
+                        {% elif intf.peer_leaf_id is not defined and intf.ipg is defined %}
+                        "tDn": "topology/pod-{{ intf.pod }}/paths-{{ intf.leaf_id }}/pathep-[{{ intf.ipg }}]",
+                        {% else %}
+                        "tDn": "topology/pod-{{ intf.pod }}/protpaths-{{ intf.leaf_id }}-{{ intf.peer_leaf_id }}/pathep-[{{ intf.ipg }}]",
+                        {% endif %}
+
+                        "status": "{{ 'deleted' if intf.state is defined and intf.state == 'absent' else 'created,modified' }}"
+                      },
+                      "children": [
+                        {% if intf.peer_leaf_id is defined and intf.ipg is defined %}
+                        {
+                          "l3extMember":{
+                            "attributes":{
+                              "addr": "{{ intf.addr }}",
+                              "side": "A"
+                            },
+                          }
+                        },
+                        {
+                          "l3extMember":{
+                            "attributes":{
+                              "addr": "{{ intf.peer_addr }}",
+                              "side": "B"
+                            },
+                          }
+                        }
+                        {% endif %}
+                      ]
+                    }
+                  }
+                  {% if not loop.last %},{% endif %}
+                  {% endfor %}
+
+                ]
+              }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+          ]
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+    {% endif %}
+  }
+}
