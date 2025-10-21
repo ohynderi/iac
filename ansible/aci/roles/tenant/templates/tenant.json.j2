@@ -1,0 +1,30 @@
+{
+  "fvTenant": {
+    "attributes": {
+      "name": "{{ tenant.name }}",
+      "status": "{{ 'deleted' if tenant.state == 'absent' else 'created,modified' }}"
+      {% if tenant.state == 'present' %}
+      ,
+      "descr": "{{ tenant.description | default('') }}"
+      {% endif %}
+    }
+    {% if tenant.state == 'present' %}
+    ,
+    "children": [
+      {% for tag in tenant.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+    ]
+    {% endif %}
+  }
+}

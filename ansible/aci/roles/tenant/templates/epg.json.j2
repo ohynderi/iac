@@ -74,6 +74,30 @@
       }
       {% endfor %}
 
+      {% for contract in epg.contracts | default( [] ) %}
+      {% if contract.type == 'consumer' %}
+      ,
+      {
+        "fvRsCons": {
+          "attributes": {
+            "tnVzBrCPName": "{{ contract.name }}",
+            "status": "{{ 'deleted' if contract.state is defined and contract.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% else %}
+      ,
+      {
+        "fvRsProv": {
+          "attributes": {
+            "tnVzBrCPName": "{{ contract.name }}",
+            "status": "{{ 'deleted' if contract.state is defined and contract.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% endif %}
+      {% endfor %}
+
     ]
     {% endif %}
   }
