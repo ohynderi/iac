@@ -8,33 +8,18 @@
       use_ssl: yes
       validate_certs: no
       annotation: orchestrator:ansible
-  no_log: true
+    no_log: true
 
-- name: "{{ tenant_vars.name }}/{{ bd_vars.name }}"
-  cisco.aci.aci_bd:
+- aci_rest:
     <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    vrf: "{{ bd_vars.name }}"
-    bd: "{{ bd_vars.name }}"
-    state: "{{ bd_vars.state }}"
-    description: "{{ bd_vars.description | default(omit) }}"
+    method: post
+    path: "/api/mo/uni/tn-{{ tenant.name }}.json"
+    content: "{{ lookup('template', 'bd.json.j2') | from_yaml | to_json }}"
+
   delegate_to: localhost
-
-- name: "{{ tenant_vars.name }}/{{ bd_vars.name }} Subnets"
-  cisco.aci.aci_bd_subnet:
-    <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    bd: "{{ bd_vars.name }}"
-    gateway: "{{ bd_subnet_vars.ip }}"
-    mask: "{{ bd_subnet_vars.mask }}"
-    scope: "{{ bd_subnet_vars.scope | default(omit) }}"
-    state: "{{ bd_subnet_vars.state }}"
-
-  loop: '{{ bd_vars.subnets | default( [] ) }}'
+  loop: "{{ tenant.bridge_domains | default([]) }}"
   loop_control:
-    loop_var: bd_subnet_vars
-    label: "{{ [ tenant_vars.name, bd_vars.name, bd_subnet_vars.ip] | join('/') }}"
-
-
-
-  delegate_to: localhost
+    loop_var: bd
+    label: "{{ [ tenant.name, bd.name ] | join('/') }}"
+  when:
+    - bd.state is defined

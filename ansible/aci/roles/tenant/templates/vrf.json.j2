@@ -1,0 +1,59 @@
+{
+  "fvCtx": {
+    "attributes": {
+      "name": "{{ vrf.name }}",
+      "status": "{{ 'deleted' if vrf.state == 'absent' else 'created,modified' }}"
+      {% if vrf.state == 'present' %}
+      ,
+      "descr": "{{ vrf.description | default('') }}"
+      {% endif %}
+    }
+    {% if vrf.state == 'present' %}
+    ,
+    "children": [
+      {% for tag in vrf.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      },
+      {% endfor %}
+      {
+        "vzAny": {
+          "attributes": {},
+          "children": [
+            {% for contract in vrf.contracts | default( [] ) %}
+
+            {% if contract.type == 'consumer' %}
+            {
+              "vzRsAnyToCons": {
+                "attributes": {
+                  "tnVzBrCPName": "{{ contract.name }}",
+                  "status": "{{ 'deleted' if contract.state is defined and contract.state == 'absent' else 'created,modified' }}"
+                }
+              }
+            }
+            {% else %}
+            {
+              "vzRsAnyToProv": {
+                "attributes": {
+                  "tnVzBrCPName": "{{ contract.name }}",
+                  "status": "{{ 'deleted' if contract.state is defined and contract.state == 'absent' else 'created,modified' }}"
+                }
+              }
+            }
+            {% endif %}
+
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+          ]
+        }
+      }
+    ]
+    {% endif %}
+  }
+}

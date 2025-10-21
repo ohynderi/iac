@@ -1,0 +1,63 @@
+{
+  "fvBD": {
+    "attributes": {
+      "name": "{{ bd.name }}",
+      "status": "{{ 'deleted' if bd.state == 'absent' else 'created,modified' }}"
+      {% if bd.state == 'present' %}
+      ,
+      "descr": "{{ bd.description | default('') }}",
+
+      {% if bd.unicast_routing | default(false) %}
+      "unicastRoute": "yes",
+      "unkMacUcastAct": "proxy",
+      "arpFlood": "no"
+      {% else %}
+      "unicastRoute": "no",
+      "unkMacUcastAct": "flood",
+      "arpFlood": "yes"
+      {% endif %}
+
+      {% endif %}
+    }
+    {% if bd.state == 'present' %}
+    ,
+    "children": [
+      {
+        "fvRsCtx": {
+          "attributes": {
+            "tnFvCtxName": "{{ bd.vrf }}",
+            "status": "created,modified"
+          }
+        }
+      }
+      {% for tag in bd.tags | default( [] ) %}
+      ,
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+      {% for subnet in bd.subnets | default( [] ) %}
+      ,
+      {
+        "fvSubnet": {
+          "attributes": {
+            "ip": "{{ subnet.ip }}",
+            "preferred": "{{ 'true' if loop.first else 'false'}}",
+            {% if subnet.scope is defined %}
+            "scope": "{{ subnet.scope }}",
+            {% endif %}
+            "status": "{{ 'deleted' if subnet.state is defined and subnet.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+    {% endif %}
+  }
+}

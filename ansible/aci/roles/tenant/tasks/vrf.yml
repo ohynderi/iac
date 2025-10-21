@@ -10,33 +10,19 @@
       annotation: orchestrator:ansible
   no_log: true
 
-- name: "{{ tenant_vars.name }}/{{ vrf_vars.name }}"
-  aci_vrf:
+- aci_rest:
     <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    descr: "{{ vrf_vars.description | default(omit) }}"
-    vrf: "{{ vrf_vars.name }}"
-    state: "{{ vrf_vars.state }}"
+    method: post
+    path: "/api/mo/uni/tn-{{ tenant.name }}.json"
+    content: "{{ lookup('template', 'vrf.json.j2') | from_yaml | to_json }}"
 
-  when: 
-    - vrf_vars.state is present
   delegate_to: localhost
-
-- name: "{{ tenant_vars.name }}/{{ vrf_vars.name }} vzAny contracts"
-  cisco.aci.aci_vzany_to_contract:
-    <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    vrf: "{{  vrf_vars.name }}"
-    contract: "{{ vzany_contract_var.name }}"
-    type: "{{ vzany_contract_var.type }}"
-    state: "{{ vzany_contract_var.state }}"
-
-  loop: "{{ vrf_vars.contracts | default( [] ) }}"
+  loop: "{{ tenant.vrfs | default([]) }}"
   loop_control:
-    loop_var: vzany_contract_var
-    label: "{{ [ tenant_vars.name, vrf_vars.name, vzany_contract_var.name ] | join('/') }}"
-
+    loop_var: vrf
+    label: "{{ [ tenant.name, vrf.name ] | join('/') }}"
   when:
-    - vzany_contract_var.state is defined
+    - vrf.state is defined
 
-  delegate_to: localhost
+
+

@@ -11,44 +11,35 @@
       annotation: orchestrator:ansible
 
 
-# - name: Create tenant
-#   aci_tenant:
-#     <<: *aci_login
-#     tenant: '{{ tenant_vars.name }}'
-#     description: '{{ tenant_vars.description | default(omit) }}'
-#     state: "{{ tenant_vars.state }}"
-#   when:
-#     - tenant_vars.state is defined
-#   delegate_to: localhost
+- name: Create tenant
+  aci_tenant:
+    <<: *aci_login
+    tenant: '{{ tenant.name }}'
+    description: '{{ tenant.description | default(omit) }}'
+    state: "{{ tenant.state }}"
+  when:
+    - tenant.state is defined
+  delegate_to: localhost
 
-# - name: Import vrf tasks
-#   include_tasks: vrf.yml
-#   loop: '{{ tenant_vars.vrfs | default( [] ) }}'
-#   loop_control:
-#     loop_var: vrf_vars
-#     label: "{{ [ tenant_vars.name, vrf_vars.name ] | join('/') }}"
-#   when:
-#     - tenant_present
+- name: Import vrf tasks
+  include_tasks: vrf.yml
+  when:
+    - tenant_present
 
 # - name: Import bd tasks
 #   include_tasks: bd.yml
-#   loop: '{{ tenant_vars.bridge_domains | default( [] ) }}'
-#   loop_control:
-#     loop_var: bd_vars
-#     label: "{{ [ tenant_vars.name, bd_vars.name ] | join('/') }}"
 #   when: 
 #     - tenant_present
-#     - bd_vars.state is defined
 
 # - name: Import ap tasks
 #   include_tasks: ap.yml
 #   when:
 #     - tenant_present
 
-- name: Import epg tasks
-  include_tasks: epg.yml
-  when:
-    - tenant_present
+# - name: Import epg tasks
+#   include_tasks: epg.yml
+#   when:
+#     - tenant_present
 
 
 # - name: Import l3out tasks
