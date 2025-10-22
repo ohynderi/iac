@@ -10,24 +10,16 @@
       annotation: orchestrator:ansible
   no_log: true
 
-- cisco.aci.aci_contract:
+- aci_rest:
     <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    contract: "{{ contract_vars.name }}"
-    scope: "context"
-  delegate_to: localhost
+    method: post
+    path: "/api/mo/uni/tn-{{ tenant.name}}.json"
+    content: "{{ lookup('template', 'contract.json.j2') | from_yaml | to_json }}"
 
-- cisco.aci.aci_contract_subject:
-    <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    contract: "{{ contract_vars.name }}"
-    subject: "{{ contract_vars.subject }}"
   delegate_to: localhost
-
-- cisco.aci.aci_contract_subject_to_filter:
-    <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    contract: "{{ contract_vars.name }}"
-    subject: "{{ contract_vars.subject }}"
-    filter: "{{ contract_vars.filter }}"
-  delegate_to: localhost
+  loop: "{{ tenant.contracts | default([]) }}"
+  loop_control:
+    loop_var: contract
+    label: "{{ [ tenant.name, contract.name ] | join('/') }}"
+  when:
+    - contract.state is defined

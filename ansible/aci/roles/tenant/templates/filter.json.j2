@@ -1,0 +1,48 @@
+{
+  "vzFilter": {
+    "attributes": {
+      "name": "{{ filter.name }}",
+      "status": "{{ 'deleted' if filter.state == 'absent' else 'created,modified' }}"
+      {% if filter.state == 'present' %}
+      ,
+      "descr": "{{ filter.description | default('') }}"
+      {% endif %}
+    }
+    {% if filter.state == 'present' %}
+    ,
+    "children": [
+      {% for tag in filter.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+      {% if filter.tag|default([])| length > 0 and filter.entry|default([])| length > 0 %},{% endif %}
+
+      {% for entry in filter.entries | default( [] ) %}
+      {
+        "vzEntry": {
+          "attributes": {
+            "name": "{{ entry.name }}",
+            "descr": "{{ entry.name | default('') }}",
+            "etherT": "{{ entry.ethertype | default('unspecified') }}",
+            "prot": "{{ entry.ip_protocol | default('unspecified') }}",
+            "dFromPort": "{{ entry.from_port | default('unspecified') }}",
+            "dToPort": "{{ entry.to_port | default('unspecified') }}",
+            "status": "{{ 'deleted' if entry.state is defined and entry.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+    {% endif %}
+  }
+}

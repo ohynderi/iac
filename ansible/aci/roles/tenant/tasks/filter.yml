@@ -10,18 +10,16 @@
       annotation: orchestrator:ansible
   no_log: true
 
-- cisco.aci.aci_filter:
+- aci_rest:
     <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    filter: "{{ filter_vars.name }}"
-  delegate_to: localhost
+    method: post
+    path: "/api/mo/uni/tn-{{ tenant.name}}.json"
+    content: "{{ lookup('template', 'filter.json.j2') | from_yaml | to_json }}"
 
-- cisco.aci.aci_filter_entry:
-    <<: *aci_login
-    tenant: "{{ tenant_vars.name }}"
-    filter: "{{ filter_vars.name }}"
-    entry: "{{ filter_vars.entry }}"
-    ether_type: ip
-    ip_protocol: "{{ filter_vars.protocol }}"
-    dst_port: "{{ filter_vars.port }}"
   delegate_to: localhost
+  loop: "{{ tenant.filters | default([]) }}"
+  loop_control:
+    loop_var: filter
+    label: "{{ [ tenant.name, filter.name ] | join('/') }}"
+  when:
+    - filter.state is defined

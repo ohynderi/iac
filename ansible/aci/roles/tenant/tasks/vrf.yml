@@ -14,7 +14,7 @@
     <<: *aci_login
     method: post
     path: "/api/mo/uni/tn-{{ tenant.name }}.json"
-    content: "{{ lookup('template', 'vrf.json.j2') | from_yaml | to_json }}"
+    content: "{{ lookup('template', 'vrf.json.j2')  }}"
 
   delegate_to: localhost
   loop: "{{ tenant.vrfs | default([]) }}"

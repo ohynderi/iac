@@ -23,10 +23,6 @@
         leaf_to_vpc_domain_map: {}
 
 
-    - name: Build internal structure
-      include_role:
-        name: fact_builders
-
     # - name: Apply fabric policies role
     #   include_role:
     #     name: fabric

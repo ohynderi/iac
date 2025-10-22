@@ -1,0 +1,59 @@
+{
+  "vzBrCP": {
+    "attributes": {
+      "name": "{{ contract.name }}",
+      "status": "{{ 'deleted' if contract.state == 'absent' else 'created,modified' }}"
+      {% if contract.state == 'present' %}
+      ,
+      "descr": "{{ contract.description | default('') }}"
+      {% endif %}
+    }
+    {% if contract.state == 'present' %}
+    ,
+    "children": [
+      {% for tag in contract.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+      {% if contract.tag|default([])| length > 0 and contract.subjects|default([])| length > 0 %},{% endif %}
+
+      {% for subject in contract.subjects | default( [] ) %}
+      {
+        "vzSubj": {
+          "attributes": {
+            "name": "{{ subject.name }}",
+            "descr": "{{ subject.name | default('') }}",
+            "revFltPorts": "{{ subject.reverse_filter_port | default('yes') }}",
+            "status": "{{ 'deleted' if subject.state is defined and subject.state == 'absent' else 'created,modified' }}"
+          },
+          "children": [
+            {% for filter in contract.filter | default( [] ) %}
+            {
+              "vzRsSubjFiltAtt": {
+                "attributes": {
+                  "action": "{{ filter.action }}",
+                  "tnVzFilterName": "{{ filter.name }}",
+                  "status": "{{ 'deleted' if filter.state is defined and filter.state == 'absent' else 'created,modified' }}"
+                }
+              }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+          ]
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+    {% endif %}
+  }
+}

@@ -11,50 +11,43 @@
       annotation: orchestrator:ansible
 
 
-# - name: Import tenant tasks
-#   include_tasks: tenant.yml
-#   when:
-#     - tenant_present
+- name: Import tenant tasks
+  include_tasks: tenant.yml
+  when:
+    - tenant_present
 
+- name: Import vrf tasks
+  include_tasks: vrf.yml
+  when:
+    - tenant_present
 
-# - name: Import vrf tasks
-#   include_tasks: vrf.yml
-#   when:
-#     - tenant_present
+- name: Import bd tasks
+  include_tasks: bd.yml
+  when: 
+    - tenant_present
 
-# - name: Import bd tasks
-#   include_tasks: bd.yml
-#   when: 
-#     - tenant_present
+- name: Import ap tasks
+  include_tasks: ap.yml
+  when:
+    - tenant_present
 
-# - name: Import ap tasks
-#   include_tasks: ap.yml
-#   when:
-#     - tenant_present
-
-# - name: Import epg tasks
-#   include_tasks: epg.yml
-#   when:
-#     - tenant_present
-
+- name: Import epg tasks
+  include_tasks: epg.yml
+  when:
+    - tenant_present
 
 - name: Import l3out tasks
   include_tasks: l3out.yml
   when: 
     - tenant_present
 
-# - name: Import contract tasks
-#   include_tasks: contract.yml
-#   loop: '{{ tenant_vars.contracts | default( [] ) }}'
-#   loop_control:
-#     loop_var: contract_vars
-#     label: "{{ [ tenant_vars.name, contract_vars.name ] | join('/') }}"
-#   when: tenant_present
+- name: Import contract tasks
+  include_tasks: contract.yml
+  when:
+    - tenant_present
 
-# - name: Import filter tasks
-#   include_tasks: filter.yml
-#   loop: '{{ tenant_vars.filters | default( [] ) }}'
-#   loop_control:
-#     loop_var: filter_vars
-#     label: "{{ [ tenant_vars.name, filter_vars.name ] | join('/') }}"
-#   when: tenant_present
+- name: Import filter tasks
+  include_tasks: filter.yml
+  when:
+    - tenant_present
+
