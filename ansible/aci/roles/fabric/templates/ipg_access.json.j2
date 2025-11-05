@@ -1,0 +1,78 @@
+{
+  "infraAccPortGrp": {
+    "attributes": {
+      "name": "{{ ipg.name }}",
+      "status": "{{ 'deleted' if ipg.state == 'absent' else 'created,modified' }}"
+      {% if ipg.state == 'present' %}
+      ,
+      "descr": "{{ ipg.description | default('') }}"
+      {% endif %}
+    }
+    {% if ipg.state == 'present' %}
+    ,
+    "children": [
+        {
+            "infraRsStpIfPol": {
+                "attributes": {
+                    "tnStpIfPolName": "{{ ipg.stp | default('') }}"
+                }
+            }
+        },
+        {
+            "infraRsMcpIfPol": {
+                "attributes": {
+                    "tnMcpIfPolName": "{{ ipg.mcp | default('') }}"
+                }
+            }
+        },
+        {
+            "infraRsAttEntP": {
+                "attributes": {
+                    "tDn": "{{ 'uni/infra/attentp-' + ipg.aep if ipg.aep else ''}}"
+                }
+            }
+        },
+        {
+            "infraRsCdpIfPol": {
+                "attributes": {
+                    "tnCdpIfPolName": "{{ ipg.cdp | default('') }}"
+                }
+            }
+        },
+        {
+            "infraRsLldpIfPol": {
+                "attributes": {
+                    "tnLldpIfPolName": "{{ ipg.lldp | default('') }}"
+                }
+            }
+        },
+        {
+            "infraRsL2IfPol": {
+                "attributes": {
+                    "tnL2IfPolName": "{{ ipg.l2 | default('') }}"
+                }
+            }
+        },
+        {
+            "infraRsHIfPol": {
+                "attributes": {
+                    "tnFabricHIfPolName": "{{ ipg.ll | default('') }}"
+                }
+            }
+        }        
+        {% for tag in ipg.tags | default( [] ) %}
+        ,
+        {
+            "tagAnnotation": {
+                "attributes": {
+                    "key": "{{ tag.name }}",
+                    "value": "{{ tag.value }}",
+                    "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+                }
+            }
+        }
+        {% endfor %}
+    ]
+    {% endif %}
+  }
+}

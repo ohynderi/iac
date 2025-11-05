@@ -6,19 +6,15 @@
       external: l3dom
       virtual: vmm
 
-- name: Import interface policies tasks
-  include_tasks: intf_policies.yml
+# - name: Import interface policies tasks
+#   include_tasks: intf_policies.yml
 
 - name: Import interface policy groups tasks
-  include_tasks: intf_policy_group.yml
-  loop: "{{ intf_policies_groups | default( [] ) }}"
-  loop_control:
-    loop_var: intf_pol_grp
-    label: "{{ intf_pol_grp.name }}"
+  include_tasks: ipg.yml
 
-- name: Import domains tasks
-  include_tasks: domains.yml
-  loop: "{{ domains | dict2items  }}"
-  loop_control:
-    loop_var: domain_vars
-    label: "{{ domain_vars.key }}"
+# - name: Import domains tasks
+#   include_tasks: domains.yml
+#   loop: "{{ domains | dict2items  }}"
+#   loop_control:
+#     loop_var: domain_vars
+#     label: "{{ domain_vars.key }}"

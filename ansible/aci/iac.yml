@@ -23,13 +23,13 @@
         leaf_to_vpc_domain_map: {}
 
 
-    # - name: Apply fabric policies role
-    #   include_role:
-    #     name: fabric
-    #   vars:
-    #     intf_policies: "{{ fabric.intf_policies }}"
-    #     intf_policies_groups: "{{ fabric.intf_policy_groups}}"
-    #     domains: "{{ fabric.domains }}"
+    - name: Apply fabric policies role
+      include_role:
+        name: fabric
+      vars:
+        intf_policies: "{{ fabric.intf_policies | default([]) }}"
+        intf_policy_groups: "{{ fabric.intf_policy_groups | default([]) }}"
+        domains: "{{ fabric.domains | default([]) }}"
 
     # - name: Apply node role to each node
     #   include_role:
@@ -39,10 +39,10 @@
     #     loop_var: node_vars
     #     label: "{{ node_vars.name }}"
 
-    - name: Apply tenant role to each tenant
-      include_role:
-        name: tenant
-      loop: "{{ tenants | default( [] ) }}"
-      loop_control:
-        loop_var: tenant
-        label: "{{ tenant.name }}"
+    # - name: Apply tenant role to each tenant
+    #   include_role:
+    #     name: tenant
+    #   loop: "{{ tenants | default( [] ) }}"
+    #   loop_control:
+    #     loop_var: tenant
+    #     label: "{{ tenant.name }}"

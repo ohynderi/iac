@@ -1,0 +1,41 @@
+---
+- set_fact:
+    aci_cred: &aci_login
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      use_proxy: no
+      use_ssl: yes
+      validate_certs: no
+      annotation: orchestrator:ansible
+    no_log: true
+
+- aci_rest:
+    <<: *aci_login
+    method: post
+    path: "/api/mo/uni/infra/funcprof/accportgrp-{{ ipg.name }}.json"
+    content: "{{ lookup('template', 'ipg_access.json.j2') | from_yaml | to_json }}"
+
+  delegate_to: localhost
+  loop: "{{ intf_policy_groups }}"
+  loop_control:
+    loop_var: ipg
+    label: "{{ ipg.name }}"
+  when:
+    - ipg.state is defined
+    - ipg.type == 'access'
+
+- aci_rest:
+    <<: *aci_login
+    method: post
+    path: "/api/mo/uni/infra/funcprof/accbundle-{{ ipg.name }}.json"
+    content: "{{ lookup('template', 'ipg_po.json.j2') }}"
+
+  delegate_to: localhost
+  loop: "{{ intf_policy_groups }}"
+  loop_control:
+    loop_var: ipg
+    label: "{{ ipg.name }}"
+  when:
+    - ipg.state is defined
+    - ipg.type != 'access'
