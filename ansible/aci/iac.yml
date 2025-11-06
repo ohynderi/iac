@@ -30,6 +30,7 @@
         intf_policies: "{{ fabric.intf_policies | default([]) }}"
         intf_policy_groups: "{{ fabric.intf_policy_groups | default([]) }}"
         domains: "{{ fabric.domains | default([]) }}"
+        vlan_pools: "{{ fabric.vlan_pools | default([]) }}"
 
     # - name: Apply node role to each node
     #   include_role:

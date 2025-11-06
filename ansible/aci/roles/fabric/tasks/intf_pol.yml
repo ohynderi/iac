@@ -39,49 +39,30 @@
   when:
     - pol.state is defined
 
-# - cisco.aci.aci_interface_policy_lldp:
-#     <<: *aci_login
-#     lldp_policy: "{{ item.name }}"
-#     description: "{{ item.description | default('') }}"
-#     receive_state: "{{ item.receive }}"
-#     transmit_state: "{{ item.transmit }}"
-#     state: "{{ item.state | default('present') }}"
-#   loop: "{{ intf_policies.lldp | default( [] ) }}"
-#   loop_control:
-#     label: "{{ item.name }}"
-#   delegate_to: localhost
+- aci_rest:
+    <<: *aci_login
+    method: post
+    path: "/api/mo/uni/infra.json"
+    content: "{{ lookup('template', 'intf_pol_mcp.json.j2') | from_yaml | to_json }}"
 
-# - cisco.aci.aci_interface_policy_cdp:
-#     <<: *aci_login
-#     name: "{{ item.name }}"
-#     description: "{{ item.description | default('') }}"
-#     admin_state: "{{ item.admin_state }}"
-#     state: "{{ item.state | default('present') }}"
-#   loop: "{{ intf_policies.cdp | default( [] ) }}"
-#   loop_control:
-#     label: "{{ item.name }}"
-#   delegate_to: localhost
+  delegate_to: localhost
+  loop: "{{ intf_policies.mcp | default( [] ) }}"
+  loop_control:
+    loop_var: pol
+    label: "{{ pol.name }}"
+  when:
+    - pol.state is defined
 
-# - cisco.aci.aci_interface_policy_mcp:
-#     <<: *aci_login
-#     mcp: "{{ item.name }}"
-#     description: "{{ item.description | default('') }}"
-#     admin_state: "{{ item.admin_state }}"
-#     state: "{{ item.state | default('present') }}"
-#   loop: "{{ intf_policies.mcp | default( [] ) }}"
-#   loop_control:
-#     label: "{{ item.name }}"
-#   delegate_to: localhost
+- aci_rest:
+    <<: *aci_login
+    method: post
+    path: "/api/mo/uni/infra.json"
+    content: "{{ lookup('template', 'intf_pol_lag.json.j2') | from_yaml | to_json }}"
 
-# - cisco.aci.aci_interface_policy_port_channel:
-#     <<: *aci_login
-#     port_channel: "{{ item.name }}"
-#     description: "{{ item.description | default('') }}"
-#     min_links: "{{ item.min }}"
-#     max_links: "{{ item.max }}"
-#     mode: "{{ item.mode }}"
-#     state: "{{ item.state | default('present') }}"
-#   loop: "{{ intf_policies.po | default( [] ) }}"
-#   loop_control:
-#     label: "{{ item.name }}"
-#   delegate_to: localhost
+  delegate_to: localhost
+  loop: "{{ intf_policies.lag | default( [] ) }}"
+  loop_control:
+    loop_var: pol
+    label: "{{ pol.name }}"
+  when:
+    - pol.state is defined

@@ -1,0 +1,14 @@
+{
+    "mcpIfPol": {
+        "attributes": {
+            "name": "{{ pol.name }}",
+            "status": "{{ 'deleted' if pol.state == 'absent' else 'created,modified' }}"
+
+            {% if pol.state == 'present' %}
+            ,
+            "descr": "{{ pol.description | default('') }}",
+            "adminSt": "{{ pol.admin_state }}"
+            {% endif %}
+        }
+    }
+}

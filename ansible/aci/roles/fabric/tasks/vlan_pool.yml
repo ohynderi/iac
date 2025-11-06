@@ -1,0 +1,25 @@
+---
+- set_fact:
+    aci_cred: &aci_login
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      use_proxy: no
+      use_ssl: yes
+      validate_certs: no
+      annotation: orchestrator:ansible
+    no_log: true
+
+- aci_rest:
+    <<: *aci_login
+    method: post
+    path: "/api/mo/uni/infra.json"
+    content: "{{ lookup('template', 'vlan_pool.json.j2') | from_yaml | to_json }}"
+
+  delegate_to: localhost
+  loop: "{{ vlan_pools }}"
+  loop_control:
+    loop_var: pool
+    label: "{{ pool.name }}"
+  when:
+    - pool.state is defined

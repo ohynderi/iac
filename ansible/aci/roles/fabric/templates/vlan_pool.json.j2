@@ -1,0 +1,49 @@
+{
+  "fvnsVlanInstP": {
+    "attributes": {
+      "name": "{{ pool.name }}",
+      "status": "{{ 'deleted' if pool.state == 'absent' else 'created,modified' }}"
+      {% if pool.state == 'present' %}
+      ,
+      "descr": "{{ pool.description | default('') }}",
+      "allocMode": "{{ pool.allocation | default('static') }}"
+      {% endif %}
+    }
+    {% if pool.state == 'present' %}
+    ,
+    "children": [
+
+      {% if pool.tag|default([])| length > 0 %},{% endif %}
+      {% for tag in pool.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+      {% if pool.tags|default([])|length > 0 and pool.ranges|default([])|length > 0 %},{% endif %}
+      {% for range in pool.ranges | default( [] ) %}
+      {
+        "fvnsEncapBlk": {
+          "attributes": {
+            "from": "vlan-{{ range.from }}",
+            "to": "vlan-{{ range.to }}",
+            "descr": "{{ range.description | default('') }}",
+            "role": "{{ range.role| default('external') }}",
+            "allocMode": "{{ range.allocation | default('inherit') }}",
+            "status": "{{ 'deleted' if range.state is defined and range.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+    {% endif %}
+  }
+}
