@@ -1,0 +1,83 @@
+---
+- set_fact:
+          aci_cred: &aci_login
+                  host: "{{ inventory_hostname }}"
+                  username: "{{ username }}"
+                  password: "{{ password }}"
+                  use_proxy: no
+                  use_ssl: yes
+                  validate_certs: no
+                  annotation: orchestrator:ansible
+  no_log: true
+
+
+- aci_rest:
+    <<: *aci_login
+    method: post
+    path: "/api/mo/uni.json"
+    content: "{{ lookup('template', 'dom_phy.json.j2') | from_yaml | to_json }}"
+
+  delegate_to: localhost
+  loop: "{{ (domains.physical if domains is defined and domains.physical is defined else []) }}"
+  loop_control:
+    loop_var: dom
+    label: "{{ dom.name }}"
+  when:
+    - dom.state is defined
+
+
+# - block:
+#           - cisco.aci.aci_domain:
+#                     <<: *aci_login
+#                     domain: "{{ item.name }}"
+#                     domain_type: "{{ lookup('vars', 'domain_type_map')[ domain_vars.key ] }}"
+#                     state: "{{ item.state }}"
+
+#             loop: "{{ domain_vars.value }}"
+#             delegate_to: localhost
+
+#           - cisco.aci.aci_vlan_pool:
+#                     <<: *aci_login
+#                     pool: "{{ item.name }}_pool"
+#                     pool_allocation_mode: "static"
+#                     state: "{{ item.state }}"
+
+#             loop: "{{ domain_vars.value }}"
+#             delegate_to: localhost
+
+#           - cisco.aci.aci_domain_to_vlan_pool:
+#                     <<: *aci_login
+#                     domain: "{{ item.name }}"
+#                     domain_type: "{{ lookup('vars', 'domain_type_map')[ domain_vars.key ] }}"
+#                     pool: "{{ item.name }}_pool"
+#                     pool_allocation_mode: static
+#                     state: "{{ item.state }}"
+
+#             loop: "{{ domain_vars.value }}"
+#             delegate_to: localhost
+
+#           - cisco.aci.aci_vlan_pool_encap_block:
+#                     <<: *aci_login
+#                     pool: "{{ item.0.name }}_pool"
+#                     pool_allocation_mode: static
+#                     block_name: "blockname_{{ item.1.range | regex_search('^\\d+') }}_{{ item.1.range | regex_search('\\d+$') }}"
+#                     block_start: "{{ item.1.range | regex_search('^\\d+') }}"
+#                     block_end: "{{ item.1.range | regex_search('\\d+$') }}"
+#                     state: "{{ item.1.state }}"
+
+#             loop: "{{ query('subelements', domain_vars.value, 'vlans') }}"
+#             delegate_to: localhost
+
+#   when: domain_vars.key != "virtual"
+
+# - block:
+#           - cisco.aci.aci_domain:
+#                     <<: *aci_login
+#                     domain: "{{ item.name }}"
+#                     domain_type: "{{ lookup('vars', 'domain_type_map')[ domain_vars.key ] }}"
+#                     vm_provider: "vmware"
+#                     state: "{{ item.state }}"
+
+#             loop: "{{ domain_vars.value }}"
+
+#   when: domain_vars.key == "virtual"

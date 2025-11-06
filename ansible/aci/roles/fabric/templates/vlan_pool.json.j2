@@ -12,8 +12,6 @@
     {% if pool.state == 'present' %}
     ,
     "children": [
-
-      {% if pool.tag|default([])| length > 0 %},{% endif %}
       {% for tag in pool.tags | default( [] ) %}
       {
         "tagAnnotation": {

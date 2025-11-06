@@ -15,6 +15,9 @@
 - name: Import VLAN Pool tasks
   include_tasks: vlan_pool.yml
 
+- name: Import Domain tasks
+  include_tasks: domain.yml
+
 # - name: Import interface policy groups tasks
 #   include_tasks: ipg.yml
 

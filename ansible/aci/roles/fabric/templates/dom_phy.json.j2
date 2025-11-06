@@ -1,0 +1,38 @@
+{
+  "physDomP": {
+    "attributes": {
+      "name": "{{ dom.name }}",
+      "status": "{{ 'deleted' if dom.state == 'absent' else 'created,modified' }}"
+    }
+    {% if dom.state == 'present' %}
+    ,
+    "children": [
+      {% for tag in dom.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+      {% if dom.tags|default([])|length > 0 and dom.ranges|default([])|length > 0 %},{% endif %}
+      {% for pool in dom.vlan_pools | default( [] ) %}
+      {
+        "infraRsVlanNs": {
+          "attributes": {
+            "tDn": "uni/infra/vlanns-[{{ pool.name }}]-{{ pool.allocation | default('static') }}",
+            "status": "{{ 'deleted' if pool.state is defined and pool.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+    {% endif %}
+  }
+}
