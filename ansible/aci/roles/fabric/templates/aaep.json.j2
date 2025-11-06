@@ -1,0 +1,43 @@
+{
+  "infraAttEntityP": {
+    "attributes": {
+      "name": "{{ aaep.name }}",
+      "status": "{{ 'deleted' if aaep.state == 'absent' else 'created,modified' }}"
+
+      {% if aaep.state == 'present' %}
+      ,
+      "descr": "{{ aaep.description | default('') }}"
+      {% endif %}
+    }
+    {% if aaep.state == 'present' %}
+    ,
+    "children": [
+      {% for tag in aaep.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+      {% if aaep.tags|default([])|length > 0 and aaep.domains|default([])|length > 0 %},{% endif %}
+      {% for dom in aaep.domains | default( [] ) %}
+      {
+        "infraRsDomP": {
+          "attributes": {
+            "tDn": "uni/{{ 'l3dom' if dom.type == 'l3_external' else 'phys' }}-{{ dom.name }}",
+            "status": "{{ 'deleted' if pool.state is defined and dom.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+    {% endif %}
+  }
+}
