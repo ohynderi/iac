@@ -27,6 +27,8 @@
       include_role:
         name: fabric
       vars:
+        leaf_intf_profiles: "{{ fabric.leaf_intf_profiles | default([]) }}"
+        leaf_profiles: "{{ fabric.leaf_profiles | default([]) }}"
         intf_policies: "{{ fabric.intf_policies | default([]) }}"
         intf_policy_groups: "{{ fabric.intf_policy_groups | default([]) }}"
         domains: "{{ fabric.domains | default([]) }}"

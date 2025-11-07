@@ -1,15 +1,18 @@
 ---
-- name: Import interface policy  tasks
-  include_tasks: intf_pol.yml
+- name: Import Leaf Interface Profile Tasks
+  include_tasks: leaf_intf_prof.yml
 
-- name: Import VLAN Pool tasks
-  include_tasks: vlan_pool.yml
+# - name: Import interface policy tasks
+#   include_tasks: intf_pol.yml
 
-- name: Import Domain tasks
-  include_tasks: domain.yml
+# - name: Import VLAN Pool tasks
+#   include_tasks: vlan_pool.yml
 
-- name: Import AAEP tasks
-  include_tasks: aaep.yml
+# - name: Import Domain tasks
+#   include_tasks: domain.yml
 
-- name: Import interface policy groups tasks
-  include_tasks: ipg.yml
+# - name: Import AAEP tasks
+#   include_tasks: aaep.yml
+
+# - name: Import interface policy groups tasks
+#   include_tasks: ipg.yml
