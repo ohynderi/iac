@@ -1,0 +1,71 @@
+{
+  "infraNodeP": {
+    "attributes": {
+      "name": "{{ leaf_prof.name }}",
+      "status": "{{ 'deleted' if leaf_prof.state == 'absent' else 'created,modified' }}"
+
+      {% if leaf_prof.state == 'present' %}
+      ,
+      "descr": "{{ leaf_prof.description | default('') }}"
+      {% endif %}
+    }
+    {% if leaf_prof.state == 'present' %}
+    ,
+    "children": [
+      {% for range in leaf_prof.ranges | default( [] ) %}
+      {
+        "infraLeafS": {
+          "attributes": {
+            "name": "leaf-selector",
+            "type": "range"
+            },
+            "children": [
+              {
+                "infraNodeBlk": {
+                  "attributes": {
+                    "name": "{{ range.name }}",
+                    "from_": "{{ range.from }}",
+                    "to_": "{{ range.to }}",
+                    "state": "{{ 'deleted' if range.state is defined and range.state == 'absent' else 'created,modified' }}"
+                  }
+                }
+              }
+            ]
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+      {% if leaf_prof.ranges|default([])|length > 0 and leaf_prof.leaf_interface_profiles|default([])|length > 0 %},{% endif %}
+
+      {% for leaf_intf_prof in leaf_prof.leaf_interface_profiles | default( [] ) %}
+      {
+        "infraRsAccPortP": {
+          "attributes": {
+            "tDn": "uni/infra/accportprof-{{ leaf_intf_prof.name }}",
+            "status": "{{ 'deleted' if leaf_intf_prof.state is defined and leaf_intf_prof.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+      {% if ( leaf_prof.ranges|default([])|length > 0 or leaf_prof.leaf_interface_profiles|default([])|length > 0 ) and leaf_prof.tags|default([])|length > 0  %},{% endif %}
+
+      {% for tag in leaf_prof.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+    ]
+    {% endif %}
+  }
+}

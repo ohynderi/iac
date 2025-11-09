@@ -1,6 +1,9 @@
 ---
-- name: Import Leaf Interface Profile Tasks
-  include_tasks: leaf_intf_prof.yml
+- name: Import Leaf  Profile Tasks
+  include_tasks: leaf_prof.yml
+
+# - name: Import Leaf Interface Profile Tasks
+#   include_tasks: leaf_intf_prof.yml
 
 # - name: Import interface policy tasks
 #   include_tasks: intf_pol.yml
