@@ -12,21 +12,22 @@
     {% if leaf_prof.state == 'present' %}
     ,
     "children": [
-      {% for range in leaf_prof.ranges | default( [] ) %}
+      {% for block in leaf_prof.leaf_blocks | default( [] ) %}
       {
         "infraLeafS": {
           "attributes": {
-            "name": "leaf-selector",
-            "type": "range"
+            "name": "{{ block.name }}",
+            "type": "range",
+            "status": "{{ 'deleted' if range.state is defined and block.state == 'absent' else 'created,modified' }}"
             },
             "children": [
               {
                 "infraNodeBlk": {
                   "attributes": {
-                    "name": "{{ range.name }}",
-                    "from_": "{{ range.from }}",
-                    "to_": "{{ range.to }}",
-                    "state": "{{ 'deleted' if range.state is defined and range.state == 'absent' else 'created,modified' }}"
+                    "name": "{{ block.name }}",
+                    "from_": "{{ block.from }}",
+                    "to_": "{{ block.to }}",
+                    "status": "{{ 'deleted' if block.state is defined and block.state == 'absent' else 'created,modified' }}"
                   }
                 }
               }
@@ -36,7 +37,7 @@
       {% if not loop.last %},{% endif %}
       {% endfor %}
 
-      {% if leaf_prof.ranges|default([])|length > 0 and leaf_prof.leaf_interface_profiles|default([])|length > 0 %},{% endif %}
+      {% if leaf_prof.leaf_blocks|default([])|length > 0 and leaf_prof.leaf_interface_profiles|default([])|length > 0 %},{% endif %}
 
       {% for leaf_intf_prof in leaf_prof.leaf_interface_profiles | default( [] ) %}
       {
