@@ -1,0 +1,44 @@
+{
+  "infraAccPortP": {
+    "attributes": {
+      "name": "{{ intf.name if intf.name is defined else 'eth' ~ intf.card ~ '_' ~ intf.port}}",
+      "status": "{{ 'deleted' if intf.state == 'absent' else 'created,modified' }}"
+      {% if intf.state == 'present' %}
+      ,
+      "descr": "{{ intf.description | default('') }}"
+      {% endif %}
+    }
+    {% if intf.state == 'present' %}
+    ,
+    "children": [
+      {
+        "infraPortBlk": {
+          "attributes": {
+            "fromCard": "{{ intf.card }}",
+            "toCard": "{{ intf.card }}",
+            "fromPort": "{{ intf.port }}",
+            "toPort": "{{ intf.port }}",
+            "status": "{{ 'deleted' if intf.state is defined and intf.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+
+      {% if intf.tag|default([])| length > 0 %},{% endif %}
+
+      {% for tag in intf.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+    ]
+    {% endif %}
+  }
+}

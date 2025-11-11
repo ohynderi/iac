@@ -1,0 +1,27 @@
+---
+- set_fact:
+    async_jobs: []
+    aci_cred: &aci_login
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      use_proxy: no
+      use_ssl: yes
+      validate_certs: no
+      annotation: orchestrator:ansible
+  no_log: true
+
+
+- aci_rest:
+    <<: *aci_login
+    method: post
+    path: "/api/node/mo/uni/infra/accportprof-{{ node.intf_profile }}.json"
+    content: "{{ lookup('template', 'intf_selector.json.j2') }}"
+
+  delegate_to: localhost
+  loop: "{{ node.interfaces | default([]) }}"
+  loop_control:
+    loop_var: intf
+    label: "{{ [ node.name, intf.intf_pol_group ] | join('/') }}"
+  when:
+    - intf.state is defined

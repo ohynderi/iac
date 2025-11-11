@@ -1,6 +1,9 @@
 ---
-- name: Import leaf tasks
-  include_tasks: leaf.yml
+- name: Import Intf Selector tasks
+  include_tasks: intf.yml
 
-- name: Import vpc protection group tasks
-  include_tasks: vpc_domain.yml 
+# - name: Import leaf tasks
+#   include_tasks: leaf.yml
+
+# - name: Import vpc protection group tasks
+#   include_tasks: vpc_domain.yml 

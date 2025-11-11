@@ -14,7 +14,7 @@
     <<: *aci_login
     method: post
     path: "/api/node/mo/uni/infra.json"
-    content: "{{ lookup('template', 'leaf_prof.json.j2')  }}"
+    content: "{{ lookup('template', 'leaf_prof.json.j2') | from_yaml | to_json }}"
 
   delegate_to: localhost
   loop: "{{ leaf_profiles }}"

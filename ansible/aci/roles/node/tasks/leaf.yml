@@ -11,28 +11,28 @@
       annotation: orchestrator:ansible
   no_log: true
 
-- cisco.aci.aci_switch_policy_leaf_profile:
-    <<: *aci_login
-    leaf_profile: "{{ node_vars.name }}_profile"
-    description: "{{ node_vars.description | default('') }}"
-    state: "{{ node_vars.state | default('present') }}"
-  delegate_to: localhost
+# - cisco.aci.aci_switch_policy_leaf_profile:
+#     <<: *aci_login
+#     leaf_profile: "{{ node_vars.name }}_profile"
+#     description: "{{ node_vars.description | default('') }}"
+#     state: "{{ node_vars.state | default('present') }}"
+#   delegate_to: localhost
 
-- cisco.aci.aci_switch_leaf_selector:
-    <<: *aci_login
-    leaf_profile: "{{ node_vars.name }}_profile"
-    leaf: "{{ node_vars.name }}"
-    leaf_node_blk: "blk_{{ node_vars.id }}"
-    from: "{{ node_vars.id }}"
-    to: "{{ node_vars.id }}"
-    state: "{{ node_vars.state | default('present') }}"
-  delegate_to: localhost
+# - cisco.aci.aci_switch_leaf_selector:
+#     <<: *aci_login
+#     leaf_profile: "{{ node_vars.name }}_profile"
+#     leaf: "{{ node_vars.name }}"
+#     leaf_node_blk: "blk_{{ node_vars.id }}"
+#     from: "{{ node_vars.id }}"
+#     to: "{{ node_vars.id }}"
+#     state: "{{ node_vars.state | default('present') }}"
+#   delegate_to: localhost
 
-- cisco.aci.aci_interface_policy_leaf_profile:
-    <<: *aci_login
-    leaf_interface_profile: "{{ node_vars.name }}_interface"
-    state: "{{ node_vars.state | default('present') }}"
-  delegate_to: localhost
+# - cisco.aci.aci_interface_policy_leaf_profile:
+#     <<: *aci_login
+#     leaf_interface_profile: "{{ node_vars.name }}_interface"
+#     state: "{{ node_vars.state | default('present') }}"
+#   delegate_to: localhost
 
 - cisco.aci.aci_interface_selector_to_switch_policy_leaf_profile:
     <<: *aci_login
