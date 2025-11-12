@@ -19,7 +19,7 @@
   tasks:
     - set_fact:
         intf_to_leaf_map: {} # crete by the fabric role and used by the node role
-        intf_pg_map: {} # create by the node role and use by the tenant role
+        ipg_to_type_map: {} # create by the node role and use by the tenant role
         leaf_to_vpc_domain_map: {}
 
 
@@ -35,6 +35,14 @@
     #     vlan_pools: "{{ fabric.vlan_pools | default([]) }}"
     #     aaeps: "{{ fabric.aaeps | default([]) }}"
 
+
+    - set_fact:
+        ipg_to_type_map: "{{ intf_pg_map | combine({ intf_pol_grp.name : 'port_channel' }) }}"
+      loop: "{{ fabric.intf_policy_groups | default([])
+      loop_control:
+        loop_var: ipg
+      vars:
+        type: "{{ 'accportgrp' if intf_pol_grp.type == 'access' else 'accbundle' }}"
 
     - name: Apply node role to each node
       include_role:

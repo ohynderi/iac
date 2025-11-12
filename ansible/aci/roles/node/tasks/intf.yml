@@ -15,7 +15,7 @@
 - aci_rest:
     <<: *aci_login
     method: post
-    path: "/api/node/mo/uni/infra/accportprof-{{ node.intf_profile }}.json"
+    path: "/api/mo/uni/infra/accportprof-{{ node.intf_profile }}/hports-{{ intf_name }}-typ-range.json"
     content: "{{ lookup('template', 'intf_selector.json.j2') }}"
 
   delegate_to: localhost
@@ -23,5 +23,7 @@
   loop_control:
     loop_var: intf
     label: "{{ [ node.name, intf.intf_pol_group ] | join('/') }}"
+  vars:
+    intf_name: "{{ intf.name if intf.name is defined else 'eth' ~ intf.card ~ '_' ~ intf.port}}"
   when:
     - intf.state is defined

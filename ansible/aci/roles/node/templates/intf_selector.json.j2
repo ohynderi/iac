@@ -1,7 +1,7 @@
 {
-  "infraAccPortP": {
+  "infraHPortS": {
     "attributes": {
-      "name": "{{ intf.name if intf.name is defined else 'eth' ~ intf.card ~ '_' ~ intf.port}}",
+      "name": "{{ intf_name }}",
       "status": "{{ 'deleted' if intf.state == 'absent' else 'created,modified' }}"
       {% if intf.state == 'present' %}
       ,
@@ -14,6 +14,7 @@
       {
         "infraPortBlk": {
           "attributes": {
+            "name": "block_{{ intf.card }}-{{ intf.port }}",
             "fromCard": "{{ intf.card }}",
             "toCard": "{{ intf.card }}",
             "fromPort": "{{ intf.port }}",
@@ -21,7 +22,15 @@
             "status": "{{ 'deleted' if intf.state is defined and intf.state == 'absent' else 'created,modified' }}"
           }
         }
-      }
+      },
+      {
+        "infraRsAccBaseGrp": {
+          "attributes": {
+            "tDn": "uni/infra/funcprof/accportgrp-{{ intf.intf_pol_group }}",
+            "status": "{{ 'deleted' if intf.state is defined and intf.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      },
 
       {% if intf.tag|default([])| length > 0 %},{% endif %}
 
