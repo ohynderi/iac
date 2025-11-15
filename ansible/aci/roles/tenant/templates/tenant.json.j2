@@ -1,7 +1,7 @@
 {
   "fvTenant": {
     "attributes": {
-      "name": "{{ tenant.name }}",
+      "name": "{{ tenant_name }}",
       "status": "{{ 'deleted' if tenant.state == 'absent' else 'created,modified' }}"
       {% if tenant.state == 'present' %}
       ,

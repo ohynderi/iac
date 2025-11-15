@@ -9,11 +9,14 @@
       validate_certs: no
       annotation: orchestrator:ansible
 
-- aci_rest:
+- name: Processing tenant {{ tenant.name }}
+  aci_rest:
     <<: *aci_login
     method: post
     path: "/api/mo/uni.json"
     content: "{{ lookup('template', 'tenant.json.j2') | from_yaml | to_json }}"
   delegate_to: localhost
+  vars:
+    tenant_name: "{{ tenant_name_prefix ~ tenant.name ~ tenant_name_suffix }}"
   when:
     - tenant.state is defined

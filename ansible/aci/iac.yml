@@ -6,14 +6,6 @@
   vars:
     loop_retries: 3
     retry_delay: 3
-    # aci_creds: &aci_login
-    #   host: "{{ inventory_hostname }}"
-    #   username: "{{ username }}"
-    #   password: "{{ password }}"
-    #   use_proxy: no
-    #   use_ssl: yes
-    #   validate_certs: no
-    #   annotation: orchestrator:ansible
     no_log: true
 
   tasks:
@@ -46,18 +38,18 @@
     #     vlan_pools: "{{ fabric.vlan_pools | default([]) }}"
     #     aaeps: "{{ fabric.aaeps | default([]) }}"
 
-    - name: Apply node role to each node
-      include_role:
-        name: node
-      loop: "{{ nodes }}"
-      loop_control:
-        loop_var: node
-        label: "{{ node.name }}"
-
-    # - name: Apply tenant role to each tenant
+    # - name: Apply node role to each node
     #   include_role:
-    #     name: tenant
-    #   loop: "{{ tenants | default( [] ) }}"
+    #     name: node
+    #   loop: "{{ nodes }}"
     #   loop_control:
-    #     loop_var: tenant
-    #     label: "{{ tenant.name }}"
+    #     loop_var: node
+    #     label: "{{ node.name }}"
+
+    - name: Apply tenant role to each tenant
+      include_role:
+        name: tenant
+      loop: "{{ tenants | default( [] ) }}"
+      loop_control:
+        loop_var: tenant
+        label: "{{ tenant.name }}"
