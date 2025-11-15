@@ -6,22 +6,33 @@
   vars:
     loop_retries: 3
     retry_delay: 3
-    aci_creds: &aci_login
-      host: "{{ inventory_hostname }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      use_proxy: no
-      use_ssl: yes
-      validate_certs: no
-      annotation: orchestrator:ansible
+    # aci_creds: &aci_login
+    #   host: "{{ inventory_hostname }}"
+    #   username: "{{ username }}"
+    #   password: "{{ password }}"
+    #   use_proxy: no
+    #   use_ssl: yes
+    #   validate_certs: no
+    #   annotation: orchestrator:ansible
     no_log: true
 
   tasks:
     - set_fact:
-        intf_to_leaf_map: {} # crete by the fabric role and used by the node role
-        ipg_to_type_map: {} # create by the node role and use by the tenant role
-        leaf_to_vpc_domain_map: {}
+        ipg_to_type_map: {} # structure used by the node intf task jinja template to build the proper tDN based on the ipg type
+        # {
+        #     "<server_name>": [ accportgrp | accbundle ]
+        # }
 
+    - set_fact: # Build a dict with the list of 
+        ipg_to_type_map: "{{ ipg_to_type_map | combine({ ipg.name : type }) }}"
+      loop: "{{ fabric.intf_policy_groups | default([]) }}"
+      loop_control:
+        loop_var: ipg
+      vars:
+        type: "{{ 'accportgrp' if ipg.type == 'access' else 'accbundle' }}"
+
+    - debug:
+        msg: "{{ ipg_to_type_map.server1 }} "
 
     # - name: Apply fabric policies role
     #   include_role:
@@ -34,15 +45,6 @@
     #     domains: "{{ fabric.domains | default([]) }}"
     #     vlan_pools: "{{ fabric.vlan_pools | default([]) }}"
     #     aaeps: "{{ fabric.aaeps | default([]) }}"
-
-
-    - set_fact:
-        ipg_to_type_map: "{{ intf_pg_map | combine({ intf_pol_grp.name : 'port_channel' }) }}"
-      loop: "{{ fabric.intf_policy_groups | default([])
-      loop_control:
-        loop_var: ipg
-      vars:
-        type: "{{ 'accportgrp' if intf_pol_grp.type == 'access' else 'accbundle' }}"
 
     - name: Apply node role to each node
       include_role:

@@ -26,7 +26,7 @@
       {
         "infraRsAccBaseGrp": {
           "attributes": {
-            "tDn": "uni/infra/funcprof/accportgrp-{{ intf.intf_pol_group }}",
+            "tDn": "uni/infra/funcprof/{{ ipg_type }}-{{ intf.intf_pol_group }}",
             "status": "{{ 'deleted' if intf.state is defined and intf.state == 'absent' else 'created,modified' }}"
           }
         }
