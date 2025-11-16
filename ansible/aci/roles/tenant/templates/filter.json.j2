@@ -1,7 +1,7 @@
 {
   "vzFilter": {
     "attributes": {
-      "name": "{{ filter.name }}",
+      "name": "{{ filter_name }}",
       "status": "{{ 'deleted' if filter.state == 'absent' else 'created,modified' }}"
       {% if filter.state == 'present' %}
       ,
@@ -24,19 +24,22 @@
       {% if not loop.last %},{% endif %}
       {% endfor %}
 
-      {% if filter.tag|default([])| length > 0 and filter.entry|default([])| length > 0 %},{% endif %}
+      {% if filter.tags|default([])| length > 0 and filter.entries|default([])| length > 0 %},{% endif %}
 
       {% for entry in filter.entries | default( [] ) %}
       {
         "vzEntry": {
           "attributes": {
-            "name": "{{ entry.name }}",
+            "name": "{{ entry_name_prefix ~ entry.name ~ entry_name_suffix}}",
+            "status": "{{ 'deleted' if entry.state is defined and entry.state == 'absent' else 'created,modified' }}"
+            {% if entry.state|default('present') != 'absent' %}
+            ,
             "descr": "{{ entry.name | default('') }}",
             "etherT": "{{ entry.ethertype | default('unspecified') }}",
             "prot": "{{ entry.ip_protocol | default('unspecified') }}",
             "dFromPort": "{{ entry.from_port | default('unspecified') }}",
-            "dToPort": "{{ entry.to_port | default('unspecified') }}",
-            "status": "{{ 'deleted' if entry.state is defined and entry.state == 'absent' else 'created,modified' }}"
+            "dToPort": "{{ entry.to_port | default('unspecified') }}"
+            {% endif %}
           }
         }
       }

@@ -9,7 +9,7 @@
       validate_certs: no
       annotation: orchestrator:ansible
 
-- name: Processing tenant {{ tenant.name }}
+- name: Processing tenant
   aci_rest:
     <<: *aci_login
     method: post

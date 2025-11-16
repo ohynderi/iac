@@ -10,7 +10,8 @@
       annotation: orchestrator:ansible
   no_log: true
 
-- aci_rest:
+- name: Processing filter
+  aci_rest:
     <<: *aci_login
     method: post
     path: "/api/mo/uni/tn-{{ tenant.name}}.json"
@@ -21,5 +22,7 @@
   loop_control:
     loop_var: filter
     label: "{{ [ tenant.name, filter.name ] | join('/') }}"
+  vars:
+    filter_name: "{{ filter_name_prefix ~ filter.name ~ filter_name_suffix }}"
   when:
     - filter.state is defined

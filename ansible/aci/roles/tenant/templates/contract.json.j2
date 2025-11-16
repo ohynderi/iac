@@ -1,7 +1,7 @@
 {
   "vzBrCP": {
     "attributes": {
-      "name": "{{ contract.name }}",
+      "name": "{{ contract_name }}",
       "status": "{{ 'deleted' if contract.state == 'absent' else 'created,modified' }}"
       {% if contract.state == 'present' %}
       ,
@@ -24,25 +24,31 @@
       {% if not loop.last %},{% endif %}
       {% endfor %}
 
-      {% if contract.tag|default([])| length > 0 and contract.subjects|default([])| length > 0 %},{% endif %}
+      {% if contract.tags|default([])| length > 0 and contract.subjects|default([])| length > 0 %},{% endif %}
 
       {% for subject in contract.subjects | default( [] ) %}
       {
         "vzSubj": {
           "attributes": {
-            "name": "{{ subject.name }}",
-            "descr": "{{ subject.name | default('') }}",
-            "revFltPorts": "{{ subject.reverse_filter_port | default('yes') }}",
+            "name": "{{ subject_name_prefix ~ subject.name ~ subject_name_suffix }}",
             "status": "{{ 'deleted' if subject.state is defined and subject.state == 'absent' else 'created,modified' }}"
+            {% if subject.state|default( 'present') != 'absent' %}
+            ,
+            "descr": "{{ subject.name | default('') }}",
+            "revFltPorts": "{{ subject.reverse_filter_port | default( subject_default_reverse_filter_port ) }}"
+            {% endif %}
           },
           "children": [
-            {% for filter in contract.filter | default( [] ) %}
+            {% for filter in subject.filters | default( [] ) %}
             {
               "vzRsSubjFiltAtt": {
                 "attributes": {
-                  "action": "{{ filter.action }}",
-                  "tnVzFilterName": "{{ filter.name }}",
+                  "tnVzFilterName": "{{ filter_name_prefix ~ filter.name ~ filter_name_suffix }}",
                   "status": "{{ 'deleted' if filter.state is defined and filter.state == 'absent' else 'created,modified' }}"
+                  {% if filter.state|default( 'present') != 'absent' %}
+                  ,
+                  "action": "{{ filter.action | default( subject_default_action )}}"
+                  {% endif %}
                 }
               }
             }

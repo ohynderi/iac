@@ -10,7 +10,8 @@
       annotation: orchestrator:ansible
   no_log: true
 
-- aci_rest:
+- name: Processing contract
+  aci_rest:
     <<: *aci_login
     method: post
     path: "/api/mo/uni/tn-{{ tenant.name}}.json"
@@ -21,5 +22,7 @@
   loop_control:
     loop_var: contract
     label: "{{ [ tenant.name, contract.name ] | join('/') }}"
+  vars:
+    contract_name: "{{ contract_name_prefix ~ contract.name ~ contract_name_suffix }}"
   when:
     - contract.state is defined
