@@ -1,28 +1,17 @@
 ---
-- set_fact:
-    aci_cred: &aci_login
-      host: "{{ inventory_hostname }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      use_proxy: no
-      use_ssl: yes
-      validate_certs: no
-      annotation: orchestrator:ansible
-  no_log: true
+- name: Process filter for tenant {{ tenant.name }}
+  include_tasks: wrapper_api_call.yml
 
-- name: Processing filter
-  aci_rest:
-    <<: *aci_login
-    method: post
-    path: "/api/mo/uni/tn-{{ tenant.name}}.json"
-    content: "{{ lookup('template', 'filter.json.j2') | from_yaml | to_json }}"
+  vars:
+    payload: "{{ lookup('template', 'filter.json.j2') }}"
+    path: "/api/mo/uni/tn-{{ tenant.name }}.json"
+    dn: "/api/mo/uni/tn-{{ tenant.name }}/flt-{{ filter.name }}"
+    filter_name: "{{ filter_name_prefix ~ filter.name ~ filter_name_suffix }}"
 
-  delegate_to: localhost
   loop: "{{ tenant.filters | default([]) }}"
   loop_control:
     loop_var: filter
     label: "{{ [ tenant.name, filter.name ] | join('/') }}"
-  vars:
-    filter_name: "{{ filter_name_prefix ~ filter.name ~ filter_name_suffix }}"
+
   when:
     - filter.state is defined

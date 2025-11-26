@@ -1,22 +1,12 @@
 ---
-- set_fact:
-    aci_cred: &aci_login
-      host: "{{ inventory_hostname }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      use_proxy: no
-      use_ssl: yes
-      validate_certs: no
-      annotation: orchestrator:ansible
+- name: Process Tenant
+  include_tasks: wrapper_api_call.yml
 
-- name: Processing tenant
-  aci_rest:
-    <<: *aci_login
-    method: post
-    path: "/api/mo/uni.json"
-    content: "{{ lookup('template', 'tenant.json.j2') | from_yaml | to_json }}"
-  delegate_to: localhost
   vars:
+    payload: "{{ lookup('template', 'tenant.json.j2') }}"
+    path: "/api/mo/uni.json"
+    dn: "/api/mo/uni/tn-{{ tenant.name }}"
     tenant_name: "{{ tenant_name_prefix ~ tenant.name ~ tenant_name_suffix }}"
+
   when:
     - tenant.state is defined

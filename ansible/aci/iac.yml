@@ -4,12 +4,14 @@
   connection: local
   gather_facts: False
   vars:
-    loop_retries: 3
-    retry_delay: 3
-    no_log: true
+    async_job_timeout: 5
+    async_poll_interval: 1
+    async_job_throttle: 4
 
   tasks:
     - set_fact:
+        successful_calls: []
+        failed_calls: []
         ipg_to_type_map: {} # structure used by the node intf task jinja template to build the proper tDN based on the ipg type
         # {
         #     "<server_name>": [ accportgrp | accbundle ]
@@ -22,9 +24,7 @@
         loop_var: ipg
       vars:
         type: "{{ 'accportgrp' if ipg.type == 'access' else 'accbundle' }}"
-
-    - debug:
-        msg: "{{ ipg_to_type_map.server1 }} "
+      no_log: true
 
     # - name: Apply fabric policies role
     #   include_role:
@@ -53,3 +53,11 @@
       loop_control:
         loop_var: tenant
         label: "{{ tenant.name }}"
+
+    - name: Printing successful call
+      debug:
+        msg: "{{ successful_calls }} "
+
+    - name: Printing failing call
+      debug:
+        msg: "{{ failed_calls }} "

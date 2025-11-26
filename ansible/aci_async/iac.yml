@@ -3,18 +3,18 @@
   hosts: apic
   connection: local
   gather_facts: False
-  vars:
-    loop_retries: 3
-    retry_delay: 3
-    aci_creds: &aci_login
-      host: "{{ inventory_hostname }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      use_proxy: no
-      use_ssl: yes
-      validate_certs: no
-      annotation: orchestrator:ansible
-    no_log: true
+  # vars:
+  #   loop_retries: 3
+  #   retry_delay: 3
+  #   aci_creds: &aci_login
+  #     host: "{{ inventory_hostname }}"
+  #     username: "{{ username }}"
+  #     password: "{{ password }}"
+  #     use_proxy: no
+  #     use_ssl: yes
+  #     validate_certs: no
+  #     annotation: orchestrator:ansible
+  #   no_log: true
 
 
   tasks:

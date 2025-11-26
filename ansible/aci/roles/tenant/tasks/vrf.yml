@@ -1,28 +1,17 @@
 ---
-- set_fact:
-    aci_cred: &aci_login
-      host: "{{ inventory_hostname }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      use_proxy: no
-      use_ssl: yes
-      validate_certs: no
-      annotation: orchestrator:ansible
-  no_log: true
+- name: Process VRF for tenant {{ tenant.name }}
+  include_tasks: wrapper_api_call.yml
 
-- aci_rest:
-    <<: *aci_login
-    method: post
+  vars:
     path: "/api/mo/uni/tn-{{ tenant.name }}.json"
-    content: "{{ lookup('template', 'vrf.json.j2')  }}"
+    payload: "{{ lookup('template', 'vrf.json.j2') }}"
+    dn: "/api/mo/uni/tn-{{ tenant.name }}/ctx-{{ vrf.name }}"
 
-  delegate_to: localhost
   loop: "{{ tenant.vrfs | default([]) }}"
   loop_control:
     loop_var: vrf
     label: "{{ [ tenant.name, vrf.name ] | join('/') }}"
+
   when:
     - vrf.state is defined
-
-
 

@@ -1,28 +1,18 @@
 ---
-- set_fact:
-    aci_cred: &aci_login
-      host: "{{ inventory_hostname }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      use_proxy: no
-      use_ssl: yes
-      validate_certs: no
-      annotation: orchestrator:ansible
-  no_log: true
+- name: Process Contract for tenant {{ tenant.name }}
+  include_tasks: wrapper_api_call.yml
 
-- name: Processing contract
-  aci_rest:
-    <<: *aci_login
-    method: post
+  vars:
     path: "/api/mo/uni/tn-{{ tenant.name}}.json"
-    content: "{{ lookup('template', 'contract.json.j2') | from_yaml | to_json }}"
+    payload: "{{ lookup('template', 'contract.json.j2') }}"
+    dn: "/api/mo/uni/tn-{{ tenant.name }}/ctr-{{ contract.name }}"
+    contract_name: "{{ contract_name_prefix ~ contract.name ~ contract_name_suffix }}"
 
-  delegate_to: localhost
   loop: "{{ tenant.contracts | default([]) }}"
   loop_control:
     loop_var: contract
     label: "{{ [ tenant.name, contract.name ] | join('/') }}"
-  vars:
-    contract_name: "{{ contract_name_prefix ~ contract.name ~ contract_name_suffix }}"
+
   when:
     - contract.state is defined
+

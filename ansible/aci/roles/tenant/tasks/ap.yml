@@ -1,24 +1,16 @@
 ---
-- set_fact:
-    aci_cred: &aci_login
-      host: "{{ inventory_hostname }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      use_proxy: no
-      use_ssl: yes
-      validate_certs: no
-      annotation: orchestrator:ansible
+- name: Process Application Profiles for tenant {{ tenant.name }}
+  include_tasks: wrapper_api_call.yml
 
-- aci_rest:
-    <<: *aci_login
-    method: post
+  vars:
+    payload: "{{ lookup('template', 'ap.json.j2') }}"
     path: "/api/mo/uni/tn-{{ tenant.name }}.json"
-    content: "{{ lookup('template', 'ap.json.j2') | from_yaml | to_json }}"
+    dn: "/api/mo/uni/tn-{{ tenant.name }}/ap-{{ ap.name }}"
 
-  delegate_to: localhost
   loop: "{{ tenant.application_profiles | default([]) }}"
   loop_control:
     loop_var: ap
     label: "{{ [ tenant.name, ap.name ] | join('/') }}"
+
   when:
     - ap.state is defined
