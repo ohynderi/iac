@@ -1,7 +1,7 @@
 {
   "fvAp": {
     "attributes": {
-      "name": "{{ ap.name }}",
+      "name": "{{ ap_name }}",
       "status": "{{ 'deleted' if ap.state == 'absent' else 'created,modified' }}"
       {% if ap.state == 'present' %}
       ,

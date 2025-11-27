@@ -1,7 +1,7 @@
 {
   "fvAEPg": {
     "attributes": {
-      "name": "{{ epg.name }}",
+      "name": "{{ epg_name }}",
       "status": "{{ 'deleted' if epg.state == 'absent' else 'created,modified' }}"
       {% if epg.state == 'present' %},
       "descr": "{{ epg.description | default('') }}"

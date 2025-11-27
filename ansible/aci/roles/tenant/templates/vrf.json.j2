@@ -1,7 +1,7 @@
 {
   "fvCtx": {
     "attributes": {
-      "name": "{{ vrf.name }}",
+      "name": "{{ vrf_name }}",
       "status": "{{ 'deleted' if vrf.state == 'absent' else 'created,modified' }}"
       {% if vrf.state == 'present' %}
       ,

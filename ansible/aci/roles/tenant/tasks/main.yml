@@ -1,15 +1,6 @@
 ---
 - set_fact:
     tenant_present: "{{ ( tenant.state is defined and tenant.state != 'absent' ) or tenant.state is not defined }}"
-    # aci_cred: &aci_login
-    #   host: "{{ inventory_hostname }}"
-    #   username: "{{ username }}"
-    #   password: "{{ password }}"
-    #   use_proxy: no
-    #   use_ssl: yes
-    #   validate_certs: no
-    #   annotation: orchestrator:ansible
-
 
 - name: Import tenant tasks
   include_tasks: tenant.yml
@@ -29,25 +20,25 @@
   when:
     - tenant_present
 
-# - name: Import bd tasks
-#   include_tasks: bd.yml
-#   when: 
-#     - tenant_present
+- name: Import bd tasks
+  include_tasks: bd.yml
+  when: 
+    - tenant_present
 
 - name: Import ap tasks
   include_tasks: ap.yml
   when:
     - tenant_present
 
-# - name: Import epg tasks
-#   include_tasks: epg.yml
-#   when:
-#     - tenant_present
+- name: Import epg tasks
+  include_tasks: epg.yml
+  when:
+    - tenant_present
 
-# - name: Import l3out tasks
-#   include_tasks: l3out.yml
-#   when: 
-#     - tenant_present
+- name: Import l3out tasks
+  include_tasks: l3out.yml
+  when: 
+    - tenant_present
 
 
 

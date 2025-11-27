@@ -15,4 +15,6 @@
 
   when:
     - contract.state is defined
+  
+  no_log: true
 

@@ -6,6 +6,7 @@
     payload: "{{ lookup('template', 'ap.json.j2') }}"
     path: "/api/mo/uni/tn-{{ tenant.name }}.json"
     dn: "/api/mo/uni/tn-{{ tenant.name }}/ap-{{ ap.name }}"
+    ap_name: "{{ ap_name_prefix ~ ap.name ~ ap_name_suffix }}"
 
   loop: "{{ tenant.application_profiles | default([]) }}"
   loop_control:
@@ -14,3 +15,5 @@
 
   when:
     - ap.state is defined
+
+  no_log: true

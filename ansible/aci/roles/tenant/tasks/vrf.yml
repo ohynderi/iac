@@ -6,6 +6,7 @@
     path: "/api/mo/uni/tn-{{ tenant.name }}.json"
     payload: "{{ lookup('template', 'vrf.json.j2') }}"
     dn: "/api/mo/uni/tn-{{ tenant.name }}/ctx-{{ vrf.name }}"
+    vrf_name: "{{ vrf_name_prefix ~ vrf.name ~ vrf_name_suffix }}"
 
   loop: "{{ tenant.vrfs | default([]) }}"
   loop_control:
@@ -14,4 +15,6 @@
 
   when:
     - vrf.state is defined
+
+  no_log: true
 

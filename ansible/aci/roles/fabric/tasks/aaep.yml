@@ -1,26 +1,46 @@
 ---
-- set_fact:
-          aci_cred: &aci_login
-                  host: "{{ inventory_hostname }}"
-                  username: "{{ username }}"
-                  password: "{{ password }}"
-                  use_proxy: no
-                  use_ssl: yes
-                  validate_certs: no
-                  annotation: orchestrator:ansible
-  no_log: true
+# - set_fact:
+#           aci_cred: &aci_login
+#                   host: "{{ inventory_hostname }}"
+#                   username: "{{ username }}"
+#                   password: "{{ password }}"
+#                   use_proxy: no
+#                   use_ssl: yes
+#                   validate_certs: no
+#                   annotation: orchestrator:ansible
+#   no_log: true
 
 
-- aci_rest:
-    <<: *aci_login
-    method: post
+# - aci_rest:
+#     <<: *aci_login
+#     method: post
+#     path: "/api/mo/uni/infra.json"
+#     content: "{{ lookup('template', 'aaep.json.j2') | from_yaml | to_json }}"
+
+#   delegate_to: localhost
+#   loop: "{{ aaeps }}"
+#   loop_control:
+#     loop_var: aaep
+#     label: "{{ aaep.name }}"
+#   when:
+#     - aaep.state is defined
+
+---
+- name: Process AAEP
+  include_tasks: wrapper_api_call.yml
+
+  vars:
     path: "/api/mo/uni/infra.json"
-    content: "{{ lookup('template', 'aaep.json.j2') | from_yaml | to_json }}"
+    payload: "{{ lookup('template', 'aaep.json.j2') }}"
+    dn: "/api/mo/uni/infra/aaep-{{ aaep.name }}"
 
-  delegate_to: localhost
   loop: "{{ aaeps }}"
   loop_control:
     loop_var: aaep
     label: "{{ aaep.name }}"
+
   when:
     - aaep.state is defined
+
+  no_log: true
+

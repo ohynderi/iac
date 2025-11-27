@@ -1,0 +1,57 @@
+---
+# - set_fact:
+#     aci_cred: &aci_login
+#       host: "{{ inventory_hostname }}"
+#       username: "{{ username }}"
+#       password: "{{ password }}"
+#       use_proxy: no
+#       use_ssl: yes
+#       validate_certs: no
+#       annotation: orchestrator:ansible
+
+- cisco.aci.aci_rest:
+    # <<: *aci_login            # uncomment if you use anchors
+    method: post
+    path: "{{ path }}"
+    content: "{{ payload | from_yaml | to_json }}"
+  register: rsl
+  ignore_errors: yes
+  # delegate_to: localhost      # uncomment if you need localhost execution
+
+
+- name: Categorize results
+  set_fact:
+    successful_calls: >-
+      {{
+        successful_calls
+        + [
+            {
+              'dn': dn,
+              'status': rsl.status
+            }
+          ]
+      }}
+  when:
+    - rsl.failed is defined
+    - not rsl.failed
+  no_log: true
+
+
+- name: Categorize results
+  set_fact:
+    failed_calls: >-
+      {{
+        failed_calls
+        + [
+            {
+              'dn': dn,
+              'error': (rsl.error.text if (rsl.error is defined and rsl.error.text is defined) else rsl.msg | default('')),
+              'payload': payload
+            }
+          ]
+      }}
+  when:
+    - rsl.failed is defined
+    - rsl.failed
+  # no_log: true
+

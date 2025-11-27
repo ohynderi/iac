@@ -14,3 +14,15 @@ subject_name_prefix: ''
 subject_name_suffix: ''
 subject_default_action: 'permit'
 subject_default_reverse_filter_port: 'yes'
+
+vrf_name_prefix: ''
+vrf_name_suffix: ''
+
+ap_name_prefix: ''
+ap_name_suffix: ''
+
+bd_name_prefix: ''
+bd_name_suffix: ''
+
+epg_name_prefix: ''
+epg_name_suffix: ''

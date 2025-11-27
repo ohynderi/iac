@@ -1,7 +1,7 @@
 {
   "fvBD": {
     "attributes": {
-      "name": "{{ bd.name }}",
+      "name": "{{ bd_name }}",
       "status": "{{ 'deleted' if bd.state == 'absent' else 'created,modified' }}"
       {% if bd.state == 'present' %}
       ,
@@ -30,6 +30,7 @@
           }
         }
       }
+
       {% for tag in bd.tags | default( [] ) %}
       ,
       {
@@ -40,8 +41,9 @@
             "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
           }
         }
-      }{% if not loop.last %},{% endif %}
+      }      
       {% endfor %}
+
       {% for subnet in bd.subnets | default( [] ) %}
       ,
       {
@@ -49,14 +51,19 @@
           "attributes": {
             "ip": "{{ subnet.ip }}",
             "preferred": "{{ 'true' if loop.first else 'false'}}",
+
             {% if subnet.scope is defined %}
             "scope": "{{ subnet.scope }}",
             {% endif %}
+
             "status": "{{ 'deleted' if subnet.state is defined and subnet.state == 'absent' else 'created,modified' }}"
+
           }
         }
-      }{% if not loop.last %},{% endif %}
+      }
+      {% if not loop.last %},{% endif %}
       {% endfor %}
+      
     ]
     {% endif %}
   }
