@@ -1,5 +1,5 @@
 ---
-- name: Import Leaf  Profile Tasks
+- name: Import Leaf Profile Tasks
   include_tasks: leaf_prof.yml
 
 - name: Import Leaf Interface Profile Tasks

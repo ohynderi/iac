@@ -14,6 +14,8 @@
     method: post
     path: "{{ path }}"
     content: "{{ payload | from_yaml | to_json }}"
+    suppress_previous: true
+    suppress_verification: true
   register: rsl
   ignore_errors: yes
   # delegate_to: localhost      # uncomment if you need localhost execution

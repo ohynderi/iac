@@ -1,40 +1,37 @@
 ---
-- set_fact:
-          aci_cred: &aci_login
-                  host: "{{ inventory_hostname }}"
-                  username: "{{ username }}"
-                  password: "{{ password }}"
-                  use_proxy: no
-                  use_ssl: yes
-                  validate_certs: no
-                  annotation: orchestrator:ansible
-  no_log: true
+- name: Process Physical Domain
+  include_tasks: wrapper_api_call.yml
 
-
-- aci_rest:
-    <<: *aci_login
-    method: post
+  vars:
     path: "/api/mo/uni.json"
-    content: "{{ lookup('template', 'dom_phy.json.j2') | from_yaml | to_json }}"
+    payload: "{{ lookup('template', 'dom_phy.json.j2') }}"
+    dn: "/api/mo/uni/phys-{{ dom.name }}"
 
-  delegate_to: localhost
   loop: "{{ (domains.physical if domains is defined and domains.physical is defined else []) }}"
   loop_control:
     loop_var: dom
     label: "{{ dom.name }}"
+
   when:
     - dom.state is defined
 
-- aci_rest:
-    <<: *aci_login
-    method: post
-    path: "/api/mo/uni.json"
-    content: "{{ lookup('template', 'dom_l3ext.json.j2') | from_yaml | to_json }}"
+  no_log: true
 
-  delegate_to: localhost
+
+- name: Process L3Out Domain
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    path: "/api/mo/uni.json"
+    payload: "{{ lookup('template', 'dom_l3ext.json.j2') }}"
+    dn: "/api/mo/uni/l3dom-{{ dom.name }}"
+
   loop: "{{ (domains.l3_external if domains is defined and domains.l3_external is defined else []) }}"
   loop_control:
     loop_var: dom
     label: "{{ dom.name }}"
+
   when:
     - dom.state is defined
+
+  no_log: true

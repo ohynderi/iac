@@ -1,68 +1,75 @@
 ---
-- set_fact:
-    aci_cred: &aci_login
-      host: "{{ inventory_hostname }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      use_proxy: no
-      use_ssl: yes
-      validate_certs: no
-      annotation: orchestrator:ansible
-  no_log: true
+- name: Process CDP Policy
+  include_tasks: wrapper_api_call.yml
 
-
-- aci_rest:
-    <<: *aci_login
-    method: post
+  vars:
     path: "/api/mo/uni/infra.json"
-    content: "{{ lookup('template', 'intf_pol_cdp.json.j2') | from_yaml | to_json }}"
+    payload: "{{ lookup('template', 'intf_pol_cdp.json.j2') }}"
+    dn: "uni/infra/cdpIfP-{{ pol.name }}"
 
-  delegate_to: localhost
   loop: "{{ intf_policies.cdp | default( [] ) }}"
   loop_control:
     loop_var: pol
     label: "{{ pol.name }}"
+
   when:
     - pol.state is defined
 
-- aci_rest:
-    <<: *aci_login
-    method: post
-    path: "/api/mo/uni/infra.json"
-    content: "{{ lookup('template', 'intf_pol_lldp.json.j2') | from_yaml | to_json }}"
+  no_log: true
 
-  delegate_to: localhost
+
+- name: Process LLDP Policy
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    path: "/api/mo/uni/infra.json"
+    payload: "{{ lookup('template', 'intf_pol_lldp.json.j2') }}"
+    dn: "/api/mo/uni/infra/lldpIfP-{{ pol.name }}"
+
   loop: "{{ intf_policies.lldp | default( [] ) }}"
   loop_control:
     loop_var: pol
     label: "{{ pol.name }}"
+
   when:
     - pol.state is defined
 
-- aci_rest:
-    <<: *aci_login
-    method: post
-    path: "/api/mo/uni/infra.json"
-    content: "{{ lookup('template', 'intf_pol_mcp.json.j2') | from_yaml | to_json }}"
+  no_log: true
 
-  delegate_to: localhost
+
+- name: Process MCP Policy
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    path: "/api/mo/uni/infra.json"
+    payload: "{{ lookup('template', 'intf_pol_mcp.json.j2') }}"
+    dn: "/api/mo/uni/infra/mcpIfP-{{ pol.name }}"
+
   loop: "{{ intf_policies.mcp | default( [] ) }}"
   loop_control:
     loop_var: pol
     label: "{{ pol.name }}"
+
   when:
     - pol.state is defined
 
-- aci_rest:
-    <<: *aci_login
-    method: post
-    path: "/api/mo/uni/infra.json"
-    content: "{{ lookup('template', 'intf_pol_lag.json.j2') | from_yaml | to_json }}"
+  no_log: true
 
-  delegate_to: localhost
+
+- name: Process LAG Policy
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    path: "/api/mo/uni/infra.json"
+    payload: "{{ lookup('template', 'intf_pol_lag.json.j2') }}"
+    dn: "/api/mo/uni/infra/lacplagp-{{ pol.name }}"
+
   loop: "{{ intf_policies.lag | default( [] ) }}"
   loop_control:
     loop_var: pol
     label: "{{ pol.name }}"
+
   when:
     - pol.state is defined
+
+  no_log: true

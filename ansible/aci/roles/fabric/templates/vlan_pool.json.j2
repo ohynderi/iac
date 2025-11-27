@@ -6,7 +6,7 @@
       {% if pool.state == 'present' %}
       ,
       "descr": "{{ pool.description | default('') }}",
-      "allocMode": "{{ pool.allocation | default('static') }}"
+      "allocMode": "{{ pool.allocation | default('dynamic') }}"
       {% endif %}
     }
     {% if pool.state == 'present' %}

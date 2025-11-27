@@ -1,31 +1,21 @@
 ---
-- set_fact:
-    async_jobs: []
-    aci_cred: &aci_login
-      host: "{{ inventory_hostname }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      use_proxy: no
-      use_ssl: yes
-      validate_certs: no
-      annotation: orchestrator:ansible
-  no_log: true
+- name: Process AAEP
+  include_tasks: wrapper_api_call.yml
 
-
-- aci_rest:
-    <<: *aci_login
-    method: post
-    path: "/api/mo/uni/infra/accportprof-{{ intf_prof }}/hports-{{ intf_name }}-typ-range.json"
-    content: "{{ lookup('template', 'intf_selector.json.j2') | from_yaml | to_json }}"
-
-  delegate_to: localhost
-  loop: "{{ node.interfaces | default([]) }}"
-  loop_control:
-    loop_var: intf
-    label: "{{ [ node.name, intf.intf_pol_group ] | join('/') }}"
   vars:
     intf_name: "{{ intf.name if intf.name is defined else 'eth' ~ intf.card ~ '_' ~ intf.port }}"
     ipg_type: "{{  ipg_to_type_map[ intf.intf_pol_group ] }}"
     intf_prof: "{{ node.intf_profile if ipg_to_type_map[ intf.intf_pol_group ] == 'accportgrp' else node.vpc_intf_profile }}"
+    path: "/api/mo/uni/infra/accportprof-{{ intf_prof }}/hports-{{ intf_name }}-typ-range.json"
+    payload: "{{ lookup('template', 'intf_selector.json.j2') }}"
+    dn: "/api/mo/uni/infra/accportprof-{{ intf_prof }}/hports-{{ intf_name }}-typ-range"
+
+  loop: "{{ node.interfaces | default([]) }}"
+  loop_control:
+    loop_var: intf
+    label: "{{ [ node.name, intf.intf_pol_group ] | join('/') }}"
+
   when:
     - intf.state is defined
+
+  no_log: true
