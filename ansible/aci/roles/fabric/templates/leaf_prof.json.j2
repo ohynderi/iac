@@ -1,7 +1,7 @@
 {
   "infraNodeP": {
     "attributes": {
-      "name": "{{ leaf_prof.name }}",
+      "name": "{{ leaf_prof_name }}",
       "status": "{{ 'deleted' if leaf_prof.state == 'absent' else 'created,modified' }}"
 
       {% if leaf_prof.state == 'present' %}

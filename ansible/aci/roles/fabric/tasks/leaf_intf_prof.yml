@@ -6,6 +6,7 @@
     path: "/api/mo/uni/infra.json"
     payload: "{{ lookup('template', 'leaf_intf_prof.json.j2') }}"
     dn: "/api/mo/uni/infra/accportprof-{{ leaf_intf_prof.name }}"
+    leaf_intf_prof_name: "{{ leaf_inf_prof_name_prefix ~ leaf_intf_prof.name ~ leaf_inf_prof_name_suffix }}"
 
   loop: "{{ leaf_intf_profiles }}"
   loop_control:

@@ -1,2 +1,21 @@
 ---
-# vars file for fabric
+aaep_name_prefix: ''
+aaep_name_suffix: ''
+
+dom_name_prefix: ''
+dom_name_suffix: ''
+
+intf_pol_name_prefix: ''
+intf_pol_name_suffix: ''
+
+ipg_name_prefix: ''
+ipg_name_suffix: ''
+
+leaf_inf_prof_name_prefix: ''
+leaf_inf_prof_name_suffix: ''
+
+leaf_prof_name_prefix: ''
+leaf_prof_name_suffix: ''
+
+vlan_pool_name_prefix: ''
+vlan_pool_name_suffix: ''

@@ -1,7 +1,7 @@
 {
   "infraAccPortGrp": {
     "attributes": {
-      "name": "{{ ipg.name }}",
+      "name": "{{ ipg_name }}",
       "status": "{{ 'deleted' if ipg.state == 'absent' else 'created,modified' }}"
       {% if ipg.state == 'present' %}
       ,

@@ -1,7 +1,7 @@
 {
     "lldpIfPol": {
         "attributes": {
-            "name": "{{ pol.name }}",
+            "name": "{{ pol_name }}",
             "status": "{{ 'deleted' if pol.state == 'absent' else 'created,modified' }}"
 
             {% if pol.state == 'present' %}

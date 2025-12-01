@@ -26,25 +26,28 @@
         type: "{{ 'accportgrp' if ipg.type == 'access' else 'accbundle' }}"
       no_log: true
 
-    - name: Apply fabric role to the fabric
-      include_role:
-        name: fabric
-      vars:
-        leaf_intf_profiles: "{{ fabric.leaf_intf_profiles | default([]) }}"
-        leaf_profiles: "{{ fabric.leaf_profiles | default([]) }}"
-        intf_policies: "{{ fabric.intf_policies | default([]) }}"
-        intf_policy_groups: "{{ fabric.intf_policy_groups | default([]) }}"
-        domains: "{{ fabric.domains | default([]) }}"
-        vlan_pools: "{{ fabric.vlan_pools | default([]) }}"
-        aaeps: "{{ fabric.aaeps | default([]) }}"
+    - debug:
+        var: ipg_to_type_map
 
-    - name: Apply node role to each node
-      include_role:
-        name: node
-      loop: "{{ nodes }}"
-      loop_control:
-        loop_var: node
-        label: "{{ node.name }}"
+    # - name: Apply fabric role to the fabric
+    #   include_role:
+    #     name: fabric
+    #   vars:
+    #     leaf_intf_profiles: "{{ fabric.leaf_intf_profiles | default([]) }}"
+    #     leaf_profiles: "{{ fabric.leaf_profiles | default([]) }}"
+    #     intf_policies: "{{ fabric.intf_policies | default([]) }}"
+    #     intf_policy_groups: "{{ fabric.intf_policy_groups | default([]) }}"
+    #     domains: "{{ fabric.domains | default([]) }}"
+    #     vlan_pools: "{{ fabric.vlan_pools | default([]) }}"
+    #     aaeps: "{{ fabric.aaeps | default([]) }}"
+
+    # - name: Apply node role to each node
+    #   include_role:
+    #     name: node
+    #   loop: "{{ nodes }}"
+    #   loop_control:
+    #     loop_var: node
+    #     label: "{{ node.name }}"
 
     - name: Apply tenant role to each tenant
       include_role:

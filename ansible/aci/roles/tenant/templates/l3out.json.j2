@@ -1,11 +1,12 @@
 {
   "l3extOut": {
     "attributes": {
-      "name": "{{ l3out.name }}",
+      "name": "{{ l3out_name }}",
       "status": "{{ 'deleted' if l3out.state == 'absent' else 'created,modified' }}"
       {% if l3out.state == 'present' %}
       ,
-      "descr": "{{ l3out.description | default('') }}"
+      "descr": "{{ l3out.description | default('') }}",
+      "enforceRtctrl": "{{ l3out.route_control | default( ['export'] ) | join(',') }}"
       {% endif %}
     }
     {% if l3out.state == 'present' %}
@@ -92,7 +93,7 @@
             {
               "l3extLIfP": {
                 "attributes": {
-                  "name": "{{ nprof.name }}",
+                  "name": "{{ iprof.name }}",
                   "status": "{{ 'deleted' if iprof.state is defined and iprof.state == 'absent' else 'created,modified' }}"
                 },
                 "children": [

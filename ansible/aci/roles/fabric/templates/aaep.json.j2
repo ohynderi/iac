@@ -1,7 +1,7 @@
 {
   "infraAttEntityP": {
     "attributes": {
-      "name": "{{ aaep.name }}",
+      "name": "{{ aaep_name }}",
       "status": "{{ 'deleted' if aaep.state == 'absent' else 'created,modified' }}"
 
       {% if aaep.state == 'present' %}

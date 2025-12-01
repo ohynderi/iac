@@ -1,7 +1,7 @@
 {
   "infraAccPortP": {
     "attributes": {
-      "name": "{{ leaf_intf_prof.name }}",
+      "name": "{{ leaf_intf_prof_name }}",
       "status": "{{ 'deleted' if leaf_intf_prof.state == 'absent' else 'created,modified' }}"
 
       {% if leaf_intf_prof.state == 'present' %}

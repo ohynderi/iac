@@ -26,3 +26,6 @@ bd_name_suffix: ''
 
 epg_name_prefix: ''
 epg_name_suffix: ''
+
+l3out_name_prefix: ''
+l3out_name_suffix: ''

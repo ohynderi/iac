@@ -6,6 +6,7 @@
     path: "/api/mo/uni/infra/funcprof/accportgrp-{{ ipg.name }}.json"
     payload: "{{ lookup('template', 'ipg_access.json.j2') }}"
     dn: "/api/mo/uni/infra/funcprof/accportgrp-{{ ipg.name }}"
+    ipg_name: "{{ ipg_name_prefix ~ ipg.name ~ ipg_name_suffix }}"
 
   loop: "{{ intf_policy_groups }}"
   loop_control:
@@ -26,6 +27,7 @@
     path: "/api/mo/uni/infra/funcprof/accbundle-{{ ipg.name }}.json"
     payload: "{{ lookup('template', 'ipg_po.json.j2') }}"
     dn: "/api/mo/uni/infra/funcprof/accbundle-{{ ipg.name }}"
+    ipg_name: "{{ ipg_name_prefix ~ ipg.name ~ ipg_name_suffix }}"
 
   loop: "{{ intf_policy_groups }}"
   loop_control:

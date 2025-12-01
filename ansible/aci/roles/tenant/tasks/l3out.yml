@@ -6,6 +6,8 @@
     path: "/api/mo/uni/tn-{{ tenant.name }}.json"
     payload: "{{ lookup('template', 'l3out.json.j2') }}"
     dn: "/api/mo/uni/tn-{{ tenant.name }}/out-{{ l3out.name }}"
+    l3out_name: "{{ l3out_name_prefix ~ l3out.name ~ l3out_name_suffix }}"
+
 
   loop: "{{ tenant.l3outs | default([]) }}"
   loop_control:
@@ -24,6 +26,8 @@
     path: "/api/mo/uni/tn-{{ tenant.name }}.json"
     payload: "{{ lookup('template', 'l3out_ext_epg.json.j2') }}"
     dn: "/api/mo/uni/tn-{{ tenant.name }}/out-{{ l3out.name }}/instP-*"
+    l3out_name: "{{ l3out_name_prefix ~ l3out.name ~ l3out_name_suffix }}"
+
 
   loop: "{{ tenant.l3outs | default([]) }}"
   loop_control:

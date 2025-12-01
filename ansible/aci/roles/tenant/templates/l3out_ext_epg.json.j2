@@ -1,7 +1,7 @@
 {
   "l3extOut": {
     "attributes": {
-      "name": "{{ l3out.name }}"
+      "name": "{{ l3out_name }}"
     },
     "children": [
       {% for epg in l3out.external_epgs | default( [] ) %}

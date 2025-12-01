@@ -1,7 +1,7 @@
 {
   "physDomP": {
     "attributes": {
-      "name": "{{ dom.name }}",
+      "name": "{{ dom_name }}",
       "status": "{{ 'deleted' if dom.state == 'absent' else 'created,modified' }}"
     }
     {% if dom.state == 'present' %}

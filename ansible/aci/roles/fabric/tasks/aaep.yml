@@ -6,6 +6,8 @@
     path: "/api/mo/uni/infra.json"
     payload: "{{ lookup('template', 'aaep.json.j2') }}"
     dn: "/api/mo/uni/infra/attentp-{{ aaep.name }}"
+    aaep_name: "{{ aaep_name_prefix ~ aaep.name ~ aaep_name_suffix }}"
+
 
   loop: "{{ aaeps }}"
   loop_control:

@@ -6,6 +6,7 @@
     path: "/api/mo/uni/infra.json"
     payload: "{{ lookup('template', 'intf_pol_cdp.json.j2') }}"
     dn: "uni/infra/cdpIfP-{{ pol.name }}"
+    pol_name: "{{ intf_pol_name_prefix ~ pol.name ~ intf_pol_name_suffix }}"
 
   loop: "{{ intf_policies.cdp | default( [] ) }}"
   loop_control:
@@ -25,6 +26,7 @@
     path: "/api/mo/uni/infra.json"
     payload: "{{ lookup('template', 'intf_pol_lldp.json.j2') }}"
     dn: "/api/mo/uni/infra/lldpIfP-{{ pol.name }}"
+    pol_name: "{{ intf_pol_name_prefix ~ pol.name ~ intf_pol_name_suffix }}"
 
   loop: "{{ intf_policies.lldp | default( [] ) }}"
   loop_control:
@@ -44,6 +46,7 @@
     path: "/api/mo/uni/infra.json"
     payload: "{{ lookup('template', 'intf_pol_mcp.json.j2') }}"
     dn: "/api/mo/uni/infra/mcpIfP-{{ pol.name }}"
+    pol_name: "{{ intf_pol_name_prefix ~ pol.name ~ intf_pol_name_suffix }}"
 
   loop: "{{ intf_policies.mcp | default( [] ) }}"
   loop_control:
@@ -63,6 +66,7 @@
     path: "/api/mo/uni/infra.json"
     payload: "{{ lookup('template', 'intf_pol_lag.json.j2') }}"
     dn: "/api/mo/uni/infra/lacplagp-{{ pol.name }}"
+    pol_name: "{{ intf_pol_name_prefix ~ pol.name ~ intf_pol_name_suffix }}"
 
   loop: "{{ intf_policies.lag | default( [] ) }}"
   loop_control:

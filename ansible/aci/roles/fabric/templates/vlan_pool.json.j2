@@ -1,7 +1,7 @@
 {
   "fvnsVlanInstP": {
     "attributes": {
-      "name": "{{ pool.name }}",
+      "name": "{{ pool_name }}",
       "status": "{{ 'deleted' if pool.state == 'absent' else 'created,modified' }}"
       {% if pool.state == 'present' %}
       ,
