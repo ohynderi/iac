@@ -4,8 +4,8 @@
 
   vars:
     intf_name: "{{ intf.name if intf.name is defined else 'eth' ~ intf.card ~ '_' ~ intf.port }}"
-    ipg_type: "{{  ipg_to_type_map[ intf.intf_pol_group ] }}"
-    intf_prof: "{{ node.intf_profile if ipg_to_type_map[ intf.intf_pol_group ] == 'accportgrp' else node.vpc_intf_profile }}"
+    ipg_type: "{{  ipg_to_type_map[ intf.intf_pol_group ][ 'ipg_type'] }}"
+    intf_prof: "{{ node.vpc_intf_profile if ipg_to_type_map[ intf.intf_pol_group ]['lag_type'] == 'vpc' else node.intf_profile }}"
     path: "/api/mo/uni/infra/accportprof-{{ intf_prof }}/hports-{{ intf_name }}-typ-range.json"
     payload: "{{ lookup('template', 'intf_selector.json.j2') }}"
     dn: "/api/mo/uni/infra/accportprof-{{ intf_prof }}/hports-{{ intf_name }}-typ-range"

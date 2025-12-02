@@ -4,59 +4,91 @@
   connection: local
   gather_facts: False
   vars:
-    async_job_timeout: 5
-    async_poll_interval: 1
-    async_job_throttle: 4
+    aci_cfg_directory: /config/group_vars/apic/
 
   tasks:
-    - set_fact:
+    #
+    # Initialization
+    #
+    - ansible.builtin.set_fact: # Initialize accumulators
+        merged_aci_cfg: {}
         successful_calls: []
         failed_calls: []
         ipg_to_type_map: {} # structure used by the node intf task jinja template to build the proper tDN based on the ipg type
         # {
-        #     "<server_name>": [ accportgrp | accbundle ]
+        #     "<server_name>": {
+        #          ipg_type: [ accportgrp | accbundle ]
+        #          lag_type: [ node | link ]
         # }
+      no_log: true
 
-    - set_fact: # Build a dict with the list of 
-        ipg_to_type_map: "{{ ipg_to_type_map | combine({ ipg.name : type }) }}"
+    - ansible.builtin.find: # Find all YAML files in directory and subdirectories
+        paths: "{{ aci_cfg_directory }}"
+        recurse: yes
+        patterns: ["*.yml", "*.yaml"]
+      register: all_cfg_files
+      no_log: true
+
+    - ansible.builtin.set_fact: # Merge each files into the merged_aci_cfg var
+        merged_aci_cfg: >-
+          {{ merged_aci_cfg
+             | combine(file_content,
+                       recursive=True,
+                       list_merge='append') }}
+      vars:
+        file_content: "{{ lookup('file', item.path) | from_yaml }}"
+
+      loop: "{{ all_cfg_files.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+      no_log: true
+
+    - set_fact: # Building the ipg_to_type_map dictionary
+        ipg_to_type_map: "{{ ipg_to_type_map | combine( { ipg.name : { 'ipg_type': ipg_type, 'lag_type': lag_type }} ) }}"
+
       loop: "{{ fabric.intf_policy_groups | default([]) }}"
       loop_control:
         loop_var: ipg
+
       vars:
-        type: "{{ 'accportgrp' if ipg.type == 'access' else 'accbundle' }}"
+        ipg_type: "{{ 'accportgrp' if ipg.type == 'access' else 'accbundle' }}"
+        lag_type: "{{ 'node' if ipg.type == 'vpc' else 'link' }}" 
       no_log: true
 
-    - debug:
-        var: ipg_to_type_map
+    #
+    # Applying the roles
+    #
+    - name: Apply fabric role to the fabric
+      include_role:
+        name: fabric
+      vars:
+        leaf_intf_profiles: "{{ merged_aci_cfg.fabric.leaf_intf_profiles | default([]) }}"
+        leaf_profiles: "{{ merged_aci_cfg.fabric.leaf_profiles | default([]) }}"
+        intf_policies: "{{ merged_aci_cfg.fabric.intf_policies | default([]) }}"
+        intf_policy_groups: "{{ merged_aci_cfg.fabric.intf_policy_groups | default([]) }}"
+        domains: "{{ merged_aci_cfg.fabric.domains | default([]) }}"
+        vlan_pools: "{{ merged_aci_cfg.fabric.vlan_pools | default([]) }}"
+        aaeps: "{{ merged_aci_cfg.fabric.aaeps | default([]) }}"
 
-    # - name: Apply fabric role to the fabric
-    #   include_role:
-    #     name: fabric
-    #   vars:
-    #     leaf_intf_profiles: "{{ fabric.leaf_intf_profiles | default([]) }}"
-    #     leaf_profiles: "{{ fabric.leaf_profiles | default([]) }}"
-    #     intf_policies: "{{ fabric.intf_policies | default([]) }}"
-    #     intf_policy_groups: "{{ fabric.intf_policy_groups | default([]) }}"
-    #     domains: "{{ fabric.domains | default([]) }}"
-    #     vlan_pools: "{{ fabric.vlan_pools | default([]) }}"
-    #     aaeps: "{{ fabric.aaeps | default([]) }}"
-
-    # - name: Apply node role to each node
-    #   include_role:
-    #     name: node
-    #   loop: "{{ nodes }}"
-    #   loop_control:
-    #     loop_var: node
-    #     label: "{{ node.name }}"
+    - name: Apply node role to each node
+      include_role:
+        name: node
+      loop: "{{ merged_aci_cfg.nodes }}"
+      loop_control:
+        loop_var: node
+        label: "{{ node.name }}"
 
     - name: Apply tenant role to each tenant
       include_role:
         name: tenant
-      loop: "{{ tenants | default( [] ) }}"
+      loop: "{{ merged_aci_cfg.tenants | default( [] ) }}"
       loop_control:
         loop_var: tenant
         label: "{{ tenant.name }}"
 
+    #
+    # Printing the results
+    #
     - name: Printing successful call
       debug:
         msg: "{{ successful_calls }} "
