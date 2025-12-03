@@ -53,6 +53,56 @@
           ]
         }
       }
+      {% if vrf.ipv4_route_targets is defined %}
+      ,
+      {
+        "bgpRtTargetP": {
+          "attributes": {
+            "af": "ipv4-ucast"
+          },
+          "children": [
+            {% for rt in vrf.ipv4_route_targets | default( [] ) %}
+            {
+              "bgpRtTarget": {
+                "attributes": {
+                  "rt": "{{ rt.value }}",
+                  "type": "{{ rt.type }}",
+                  "status": "{{ 'deleted' if rt.state is defined and rt.state == 'absent' else 'created,modified' }}"
+                }
+              }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+          ]
+        }
+      }
+      {% endif %}
+
+      {% if vrf.ipv4_route_targets is defined and vrf.ipv6_route_targets is defined %},{% endif %}
+
+      {% if vrf.ipv6_route_targets is defined %}
+      {
+        "bgpRtTargetP": {
+          "attributes": {
+            "af": "ipv6-ucast"
+          },
+          "children": [
+            {% for rt in vrf.ipv6_route_targets | default( [] ) %}
+            {
+              "bgpRtTarget": {
+                "attributes": {
+                  "rt": "{{ rt.name }}",
+                  "type": "{{ rt.type }}",
+                  "status": "{{ 'deleted' if rt.state is defined and rt.state == 'absent' else 'created,modified' }}"
+                }
+              }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+          ]
+        }
+      },
+      {% endif %}
     ]
     {% endif %}
   }

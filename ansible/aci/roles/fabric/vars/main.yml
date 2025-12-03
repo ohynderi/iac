@@ -1,4 +1,13 @@
 ---
+import_aaep_task: true
+import_dom_task: true
+import_dom_task: true
+import_intf_pol_task: true
+import_ipg_task: true
+import_leaf_intf_prof_task: true
+import_leaf_prof_task: true
+import_vlan_pool_task: true
+
 aaep_name_prefix: ''
 aaep_name_suffix: ''
 

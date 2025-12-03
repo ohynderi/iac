@@ -5,6 +5,9 @@
   gather_facts: False
   vars:
     aci_cfg_directory: /config/group_vars/apic/
+    enable_fabric_role: false
+    enable_node_role: false
+    enable_tenant_role: true
 
   tasks:
     #
@@ -69,6 +72,8 @@
         domains: "{{ merged_aci_cfg.fabric.domains | default([]) }}"
         vlan_pools: "{{ merged_aci_cfg.fabric.vlan_pools | default([]) }}"
         aaeps: "{{ merged_aci_cfg.fabric.aaeps | default([]) }}"
+      when:
+        - enable_fabric_role
 
     - name: Apply node role to each node
       include_role:
@@ -77,6 +82,8 @@
       loop_control:
         loop_var: node
         label: "{{ node.name }}"
+      when:
+        - enable_node_role
 
     - name: Apply tenant role to each tenant
       include_role:
@@ -85,6 +92,8 @@
       loop_control:
         loop_var: tenant
         label: "{{ tenant.name }}"
+      when:
+        - enable_tenant_role
 
     #
     # Printing the results

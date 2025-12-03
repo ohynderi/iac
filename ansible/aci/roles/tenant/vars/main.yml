@@ -1,3 +1,12 @@
+import_ap_task: false
+import_bd_task: false
+import_contract_task: false
+import_epg_task: false
+import_filter_task: false
+import_l3out_task: true
+import_tenant_task: true
+import_vrf_task: false
+
 tenant_name_prefix: ''
 tenant_name_suffix: ''
 

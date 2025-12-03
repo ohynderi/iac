@@ -15,17 +15,31 @@
       {
         "l3extRsL3DomAtt":{
           "attributes":{
-            "tDn":"uni/l3dom-{{ l3out.domain }}"
+            "tDn":"uni/l3dom-{{ l3out.domain | default('') }}"
           }
         }
       },
       {
         "l3extRsEctx":{
           "attributes":{
-            "tnFvCtxName":"{{ l3out.vrf }}"
+            "tnFvCtxName":"{{ l3out.vrf | default('') }}"
           }
         }
       }
+
+      {% if l3out.protocols is defined and l3out.protocols.ospf is defined %}
+      ,
+      {
+        "ospfExtP": {
+          "attributes": {
+            "areaId": "{{ l3out.protocols.ospf.area_id }}",
+            "areaType": "{{ l3out.protocols.ospf.area_type }}",
+            "areaCost": "{{ l3out.protocols.ospf.area_cost }}",
+            "status": "{{ 'deleted' if l3out.protocols.ospf.state is defined and l3out.protocols.ospf.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% endif %}
 
       {% if l3out.tag|default([])| length > 0 %},{% endif %}
       {% for tag in l3out.tags | default( [] ) %}

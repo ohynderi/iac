@@ -63,6 +63,19 @@
       }
       {% if not loop.last %},{% endif %}
       {% endfor %}
+
+      {% for l3out in bd.l3outs | default( [] ) %}
+      ,
+      {
+        "fvRsBDToOut": {
+          "attributes": {
+            "tnL3extOutName": "{{ l3out.name }}",
+            "status": "{{ 'deleted' if l3out.state is defined and l3out.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
       
     ]
     {% endif %}

@@ -4,41 +4,51 @@
 
 - name: Import tenant tasks
   include_tasks: tenant.yml
+  when: 
+    - import_tenant_task
+    - import_tenant_task
 
 - name: Import filter tasks
   include_tasks: filter.yml
   when:
     - tenant_present
+    - import_filter_task
 
 - name: Import contract tasks
   include_tasks: contract.yml
   when:
     - tenant_present
+    - import_contract_task
 
 - name: Import vrf tasks
   include_tasks: vrf.yml
   when:
     - tenant_present
+    - import_vrf_task
 
 - name: Import bd tasks
   include_tasks: bd.yml
   when: 
     - tenant_present
+    - import_bd_task
 
 - name: Import ap tasks
   include_tasks: ap.yml
   when:
     - tenant_present
+    - import_ap_task
 
 - name: Import epg tasks
   include_tasks: epg.yml
   when:
     - tenant_present
+    - import_epg_task
 
 - name: Import l3out tasks
   include_tasks: l3out.yml
   when: 
     - tenant_present
+    - import_l3out_task
 
 
 
