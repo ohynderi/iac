@@ -5,16 +5,17 @@
   gather_facts: False
   vars:
     aci_cfg_directory: /config/group_vars/apic/
+    schema_location: schema.json
     enable_fabric_role: false
     enable_node_role: false
     enable_tenant_role: true
 
   tasks:
     #
-    # Initialization
+    # Initialize accumulators
     #
-    - ansible.builtin.set_fact: # Initialize accumulators
-        merged_aci_cfg: {}
+    - ansible.builtin.set_fact:
+        intent: {}
         successful_calls: []
         failed_calls: []
         ipg_to_type_map: {} # structure used by the node intf task jinja template to build the proper tDN based on the ipg type
@@ -25,6 +26,9 @@
         # }
       no_log: true
 
+    #
+    # Merging the different config files to form the intent
+    #
     - ansible.builtin.find: # Find all YAML files in directory and subdirectories
         paths: "{{ aci_cfg_directory }}"
         recurse: yes
@@ -33,8 +37,8 @@
       no_log: true
 
     - ansible.builtin.set_fact: # Merge each files into the merged_aci_cfg var
-        merged_aci_cfg: >-
-          {{ merged_aci_cfg
+        intent: >-
+          {{ intent
              | combine(file_content,
                        recursive=True,
                        list_merge='append') }}
@@ -46,10 +50,24 @@
         label: "{{ item.path }}"
       no_log: true
 
+    #
+    # Validing the intent against the schema
+    #
+    - ansible.utils.validate: # Validate app_config against schema
+        data: "{{ intent | from_yaml | to_json }}"
+        criteria: "{{ lookup('ansible.builtin.file', schema_location ) }}"
+        engine: ansible.utils.jsonschema
+      vars:
+        ansible_validate_jsonschema_draft: draft7
+        ansible_validate_jsonschema_check_format: true
+
+    #
+    # Building temporary structures
+    #
     - set_fact: # Building the ipg_to_type_map dictionary
         ipg_to_type_map: "{{ ipg_to_type_map | combine( { ipg.name : { 'ipg_type': ipg_type, 'lag_type': lag_type }} ) }}"
 
-      loop: "{{ fabric.intf_policy_groups | default([]) }}"
+      loop: "{{ intent.fabric.intf_policy_groups | default([]) }}"
       loop_control:
         loop_var: ipg
 
@@ -65,20 +83,20 @@
       include_role:
         name: fabric
       vars:
-        leaf_intf_profiles: "{{ merged_aci_cfg.fabric.leaf_intf_profiles | default([]) }}"
-        leaf_profiles: "{{ merged_aci_cfg.fabric.leaf_profiles | default([]) }}"
-        intf_policies: "{{ merged_aci_cfg.fabric.intf_policies | default([]) }}"
-        intf_policy_groups: "{{ merged_aci_cfg.fabric.intf_policy_groups | default([]) }}"
-        domains: "{{ merged_aci_cfg.fabric.domains | default([]) }}"
-        vlan_pools: "{{ merged_aci_cfg.fabric.vlan_pools | default([]) }}"
-        aaeps: "{{ merged_aci_cfg.fabric.aaeps | default([]) }}"
+        leaf_intf_profiles: "{{ intent.fabric.leaf_intf_profiles | default([]) }}"
+        leaf_profiles: "{{ intent.fabric.leaf_profiles | default([]) }}"
+        intf_policies: "{{ intent.fabric.intf_policies | default([]) }}"
+        intf_policy_groups: "{{ intent.fabric.intf_policy_groups | default([]) }}"
+        domains: "{{ intent.fabric.domains | default([]) }}"
+        vlan_pools: "{{ intent.fabric.vlan_pools | default([]) }}"
+        aaeps: "{{ intent.fabric.aaeps | default([]) }}"
       when:
         - enable_fabric_role
 
     - name: Apply node role to each node
       include_role:
         name: node
-      loop: "{{ merged_aci_cfg.nodes }}"
+      loop: "{{ intent.nodes }}"
       loop_control:
         loop_var: node
         label: "{{ node.name }}"
@@ -88,7 +106,7 @@
     - name: Apply tenant role to each tenant
       include_role:
         name: tenant
-      loop: "{{ merged_aci_cfg.tenants | default( [] ) }}"
+      loop: "{{ intent.tenants | default( [] ) }}"
       loop_control:
         loop_var: tenant
         label: "{{ tenant.name }}"

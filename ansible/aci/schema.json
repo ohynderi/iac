@@ -1,0 +1,588 @@
+
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ACI Model",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "tenants": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/tenant" }
+    },
+    "fabric": { "$ref": "#/$defs/fabric" },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    }
+  },
+  "required": ["tenants"],
+  "$defs": {
+    "state": {
+      "type": "string",
+      "enum": ["present", "absent"]
+    },
+
+    "tenant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "vrfs": { "type": "array", "items": { "$ref": "#/$defs/vrf" } },
+        "bridge_domains": { "type": "array", "items": { "$ref": "#/$defs/bridge_domain" } },
+        "contracts": { "type": "array", "items": { "$ref": "#/$defs/contract" } },
+        "filters": { "type": "array", "items": { "$ref": "#/$defs/filter" } },
+        "application_profiles": { "type": "array", "items": { "$ref": "#/$defs/app_profile" } },
+        "l3outs": { "type": "array", "items": { "$ref": "#/$defs/l3out" } }
+      },
+      "required": ["name"]
+    },
+
+    "fabric": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "leaf_intf_profiles": { "type": "array", "items": { "$ref": "#/$defs/leaf_intf_profile" } },
+        "leaf_profiles": { "type": "array", "items": { "$ref": "#/$defs/leaf_profile" } },
+        "vlan_pools": { "type": "array", "items": { "$ref": "#/$defs/vlan_pool" } },
+        "domains": { "$ref": "#/$defs/domains" },
+        "aaeps": { "type": "array", "items": { "$ref": "#/$defs/aaep" } },
+        "intf_policies": { "$ref": "#/$defs/intf_policies" },
+        "intf_policy_groups": { "type": "array", "items": { "$ref": "#/$defs/intf_policy_group" } }
+      }
+    },
+
+    "leaf_intf_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name"]
+    },
+
+    "leaf_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "leaf_blocks": { "type": "array", "items": { "$ref": "#/$defs/leaf_block" } },
+        "leaf_interface_profiles": { "type": "array", "items": { "$ref": "#/$defs/leaf_interface_profile_ref" } }
+      },
+      "required": ["name"]
+    },
+
+    "leaf_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "integer" },
+        "to": { "type": "integer" },
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["from", "to"]
+    },
+
+    "leaf_interface_profile_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name"]
+    },
+
+    "vlan_pool": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "ranges": { "type": "array", "items": { "$ref": "#/$defs/vlan_range" } }
+      },
+      "required": ["name"]
+    },
+
+    "vlan_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "integer" },
+        "to": { "type": "integer" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["from", "to"]
+    },
+
+    "domains": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "physical": { "type": "array", "items": { "$ref": "#/$defs/domain_ref" } },
+        "l3_external": { "type": "array", "items": { "$ref": "#/$defs/domain_ref" } }
+      }
+    },
+
+    "domain_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "vlan_pools": { "type": "array", "items": { "$ref": "#/$defs/vlan_pool_ref" } }
+      },
+      "required": ["name"]
+    },
+
+    "vlan_pool_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name"]
+    },
+
+    "aaep": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "domains": { "type": "array", "items": { "$ref": "#/$defs/aaep_domain_binding" } }
+      },
+      "required": ["name"]
+    },
+
+    "aaep_domain_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["physical", "l3_external"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name", "type"]
+    },
+
+    "intf_policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lldp": { "type": "array", "items": { "$ref": "#/$defs/lldp_policy" } },
+        "cdp": { "type": "array", "items": { "$ref": "#/$defs/cdp_policy" } },
+        "mcp": { "type": "array", "items": { "$ref": "#/$defs/mcp_policy" } },
+        "lag": { "type": "array", "items": { "$ref": "#/$defs/lag_policy" } }
+      }
+    },
+
+    "lldp_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "receive": { "type": "string", "enum": ["enabled", "disabled"] },
+        "transmit": { "type": "string", "enum": ["enabled", "disabled"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name", "receive", "transmit"]
+    },
+
+    "cdp_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "admin_state": { "type": "string", "enum": ["enabled", "disabled"] },
+        "state": { "$ref": "#/$defs/state" },
+        "description": { "type": "string" }
+      },
+      "required": ["name", "admin_state"]
+    },
+
+    "mcp_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "admin_state": { "type": "string", "enum": ["enabled", "disabled"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name", "admin_state"]
+    },
+
+    "lag_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "min": { "type": "integer" },
+        "max": { "type": "integer" },
+        "mode": { "type": "string", "enum": ["active", "off"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name", "mode"]
+    },
+
+    "intf_policy_group": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["access", "po", "vpc"] },
+        "state": { "$ref": "#/$defs/state" },
+        "lldp": { "type": "string" },
+        "cdp": { "type": "string" },
+        "mcp": { "type": "string" },
+        "lag": { "type": "string" },
+        "aep": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["name", "type"]
+    },
+
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["leaf", "spine"] },
+        "id": { "type": "integer" },
+        "sn": { "type": "string" },
+        "intf_profile": { "type": "string" },
+        "vpc_intf_profile": { "type": "string" },
+        "interfaces": { "type": "array", "items": { "$ref": "#/$defs/node_interface" } }
+      },
+      "required": ["name", "type", "id", "sn", "intf_profile"]
+    },
+
+    "node_interface": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "port": { "type": "integer" },
+        "card": { "type": "integer" },
+        "intf_pol_group": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["port", "card", "intf_pol_group"]
+    },
+
+    "tag": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name"]
+    },
+
+    "vrf": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "contracts": { "type": "array", "items": { "$ref": "#/$defs/vrf_contract" } },
+        "ipv4_route_targets": { "type": "array", "items": { "$ref": "#/$defs/route_target" } },
+        "ipv6_route_targets": { "type": "array", "items": { "$ref": "#/$defs/route_target" } }
+      },
+      "required": ["name"]
+    },
+
+    "vrf_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["provider", "consumer"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name", "type"]
+    },
+
+    "route_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["import", "export"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name", "type"]
+    },
+
+    "bridge_domain": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "vrf": { "type": "string" },
+        "description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "unicast_routing": { "type": "boolean" },
+        "subnets": { "type": "array", "items": { "$ref": "#/$defs/subnet" } },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "l3outs": { "type": "array", "items": { "$ref": "#/$defs/bd_l3out" } }
+      },
+      "required": ["name", "vrf"]
+    },
+
+    "subnet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ip": { "type": "string" },
+        "scope": { "type": "string", "enum": ["public", "private"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["ip"]
+    },
+
+    "bd_l3out": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name"]
+    },
+
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "subjects": { "type": "array", "items": { "$ref": "#/$defs/subject" } }
+      },
+      "required": ["name"]
+    },
+
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "reverse_filter_port": { "type": "string" },
+        "filters": { "type": "array", "items": { "$ref": "#/$defs/subject_filter" } }
+      },
+      "required": ["name"]
+    },
+
+    "subject_filter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "action": { "type": "string" }
+      },
+      "required": ["name", "action"]
+    },
+
+    "filter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "entries": { "type": "array", "items": { "$ref": "#/$defs/filter_entry" } }
+      },
+      "required": ["name"]
+    },
+
+    "filter_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "ethertype": { "type": "string" },
+        "ip_protocol": { "type": "string" },
+        "from_port": { "type": "integer" },
+        "to_port": { "type": "integer" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name", "ethertype", "ip_protocol", "from_port", "to_port"]
+    },
+
+    "app_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "epgs": { "type": "array", "items": { "$ref": "#/$defs/epg" } }
+      },
+      "required": ["name"]
+    },
+
+    "epg": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "bd": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "domains": { "type": "array", "items": { "$ref": "#/$defs/domain" } },
+        "interfaces": { "type": "array", "items": { "$ref": "#/$defs/interface" } },
+        "contracts": { "type": "array", "items": { "$ref": "#/$defs/vrf_contract" } }
+      },
+      "required": ["name", "bd"]
+    },
+
+    "domain": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["physical", "virtual"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name", "type"]
+    },
+
+    "interface": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "leaf_id": { "type": "integer" },
+        "pod": { "type": "integer" },
+        "port": { "type": "string" },
+        "ipg": { "type": "string" },
+        "peer_leaf_id": { "type": "integer" },
+        "mode": { "type": "string", "enum": ["regular", "untagged"] },
+        "vlan": { "type": "integer" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["leaf_id", "pod", "mode", "vlan"]
+    },
+
+    "l3out": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "vrf": { "type": "string" },
+        "domain": { "type": "string" },
+        "route_control": { "type": "array", "items": { "type": "string" } },
+        "protocols": { "type": "object" },
+        "external_epgs": { "type": "array", "items": { "$ref": "#/$defs/external_epg" } },
+        "node_profiles": { "type": "array", "items": { "$ref": "#/$defs/node_profile" } }
+      },
+      "required": ["name", "vrf", "domain"]
+    },
+
+    "external_epg": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "subnets": { "type": "array", "items": { "$ref": "#/$defs/external_subnet" } }
+      },
+      "required": ["name"]
+    },
+
+    "external_subnet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ip": { "type": "string" },
+        "agg_export": { "type": "boolean" },
+        "agg_shared": { "type": "boolean" },
+        "export_route_ctrl": { "type": "boolean" },
+        "external_epg": { "type": "boolean" },
+        "shared_route_ctrl": { "type": "boolean" },
+        "shared_security_import": { "type": "boolean" }
+      },
+      "required": ["ip"]
+    },
+
+    "node_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "routers": { "type": "array", "items": { "$ref": "#/$defs/router" } },
+        "static_routes": { "type": "array", "items": { "$ref": "#/$defs/static_route" } },
+        "interface_profiles": { "type": "array", "items": { "$ref": "#/$defs/interface_profile" } }
+      },
+      "required": ["name"]
+    },
+
+    "router": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pod": { "type": "integer" },
+        "leaf_id": { "type": "integer" },
+        "router_id": { "type": "string" },
+        "loopback": { "type": "boolean" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["pod", "leaf_id", "router_id"]
+    },
+
+    "static_route": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "prefix": { "type": "string" },
+        "nhop": { "type": "string" }
+      },
+      "required": ["prefix", "nhop"]
+    },
+
+    "interface_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "interfaces": { "type": "array", "items": { "$ref": "#/$defs/l3_interface" } }
+      },
+      "required": ["name"]
+    },
+
+    "l3_interface": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pod": { "type": "integer" },
+        "leaf_id": { "type": "integer" },
+        "port": { "type": "string" },
+        "ipg": { "type": "string" },
+        "peer_leaf_id": { "type": "integer" },
+        "type": { "type": "string", "enum": ["l3-port", "sub-interface", "ext-svi"] },
+        "mode": { "type": "string", "enum": ["regular", "untagged", "native"] },
+        "vlan": { "type": "integer" },
+        "addr": { "type": "string" },
+        "peer_addr": { "type": "string" },
+        "mtu": { "type": "integer" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["pod", "leaf_id", "type", "mode", "vlan", "addr"]
+    }
+  }
+}
