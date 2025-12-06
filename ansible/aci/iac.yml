@@ -4,7 +4,7 @@
   connection: local
   gather_facts: False
   vars:
-    aci_cfg_directory: /config/group_vars/apic/
+    aci_cfg_directory: intent/
     schema_location: schema.json
     enable_fabric_role: false
     enable_node_role: false
