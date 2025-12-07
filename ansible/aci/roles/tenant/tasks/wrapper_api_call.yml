@@ -55,5 +55,5 @@
   when:
     - rsl.failed is defined
     - rsl.failed
-  # no_log: true
+  no_log: true
 

@@ -65,7 +65,7 @@
             {
               "bgpRtTarget": {
                 "attributes": {
-                  "rt": "{{ rt.value }}",
+                  "rt": "{{ rt.name }}",
                   "type": "{{ rt.type }}",
                   "status": "{{ 'deleted' if rt.state is defined and rt.state == 'absent' else 'created,modified' }}"
                 }
