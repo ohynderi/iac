@@ -36,9 +36,19 @@
         "filters": { "type": "array", "items": { "$ref": "#/$defs/filter" } },
         "application_profiles": { "type": "array", "items": { "$ref": "#/$defs/app_profile" } },
         "l3outs": { "type": "array", "items": { "$ref": "#/$defs/l3out" } },
-        "match_rules": { "type": "array", "items": { "$ref": "#/$defs/match_rule" } }
+        "policies": { "$ref": "#/$defs/policies" }
       },
       "required": ["name"]
+    },
+
+    "policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "match_rules": { "type": "array", "items": { "$ref": "#/$defs/match_rule" } },
+        "set_rules": { "type": "array", "items": { "$ref": "#/$defs/set_rule" } },
+        "route_maps": { "type": "array", "items": { "$ref": "#/$defs/route_map" } }
+      }
     },
 
     "fabric": {
@@ -452,6 +462,59 @@
       "required": ["ip"]
     },
 
+    "set_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "as_path": { "type": "array", "items": { "$ref": "#/$defs/set_rule_as_path" } }
+      },
+      "required": ["name"]
+    },
+
+    "set_rule_as_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "order": { "type": "integer" },
+        "asn": { "type": "integer" },
+        "description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["order", "asn"]
+    },
+
+    "route_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "contexts": { "type": "array", "items": { "$ref": "#/$defs/route_map_context" } }
+      },
+      "required": ["name"]
+    },
+
+    "route_map_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "order": { "type": "integer" },
+        "action": { "type": "string", "enum": ["permit", "deny"] },
+        "description": { "type": "string" },
+        "match_rule": { "type": "string" },
+        "set_rule": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name", "order", "action"]
+    },
+
     "app_profile": {
       "type": "object",
       "additionalProperties": false,
@@ -608,9 +671,40 @@
         "addr": { "type": "string" },
         "peer_addr": { "type": "string" },
         "mtu": { "type": "integer" },
-        "state": { "$ref": "#/$defs/state" }
+        "state": { "$ref": "#/$defs/state" },
+        "connectivity_profiles": { "type": "array", "items": { "$ref": "#/$defs/bgp_connectivity_profile" } }
       },
       "required": ["pod", "leaf_id", "type", "mode", "vlan", "addr"]
+    },
+
+    "bgp_connectivity_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "peer_address": { "type": "string" },
+        "description": { "type": "string" },
+        "remote_asn": { "type": "integer" },
+        "local_asn": { "type": "integer" },
+        "send_community": { "type": "boolean" },
+        "send_extended_community": { "type": "boolean" },
+        "bfd": { "type": "boolean" },
+        "weight": { "type": "integer" },
+        "ttl": { "type": "integer" },
+        "state": { "$ref": "#/$defs/state" },
+        "route_maps": { "type": "array", "items": { "$ref": "#/$defs/bgp_peer_route_map" } }
+      },
+      "required": ["peer_address", "remote_asn"]
+    },
+
+    "bgp_peer_route_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "direction": { "type": "string", "enum": ["import", "export"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name", "direction"]
     }
   }
 }

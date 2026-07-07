@@ -14,6 +14,18 @@
     - tenant_present
     - import_match_rule_task
 
+- name: Import set rule tasks
+  include_tasks: set_rule.yml
+  when:
+    - tenant_present
+    - import_set_rule_task
+
+- name: Import route map tasks
+  include_tasks: route_map.yml
+  when:
+    - tenant_present
+    - import_route_map_task
+
 - name: Import filter tasks
   include_tasks: filter.yml
   when:

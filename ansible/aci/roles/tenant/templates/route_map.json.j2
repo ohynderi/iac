@@ -1,0 +1,64 @@
+{
+    "rtctrlProfile": {
+        "attributes": {
+            "descr": "{{ route_map.description | default('') }}",
+            "status": "{{ 'deleted' if route_map.state == 'absent' else 'created,modified' }}",
+            "name": "{{ route_map.name }}"
+        },
+        "children": [
+            {% for tag in route_map.tags | default( [] ) %}
+            {
+                "tagAnnotation": {
+                    "attributes": {
+                        "key": "{{ tag.name }}",
+                        "value": "{{ tag.value }}",
+                        "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+                    }
+                }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+            {% if route_map.tags|default([])| length > 0 and route_map.contexts|default([])| length > 0 %},{% endif %}
+            {% for context in route_map.contexts | default( [] ) %}
+            {
+                "rtctrlCtxP": {
+                    "attributes": {
+                        "name": "{{ context.name }}",
+                        "order": "{{ context.order }}",
+                        "action": "{{ context.action }}",
+                        "descr": "{{ context.description | default('') }}",
+                        "status": "{{ 'deleted' if context.state is defined and context.state == 'absent' else 'created,modified' }}"
+                    },
+                    "children": [
+                        {
+                            "rtctrlRsCtxPToSubjP": {
+                                "attributes": {
+                                    "tnRtctrlSubjPName": "{{ context.match_rule }}"
+                                }
+                            }
+                        },
+                        {
+                            "rtctrlScope": {
+                                "attributes": {
+                                    "descr": "",
+                                    "name": ""
+                                },
+                                "children": [
+                                    {
+                                        "rtctrlRsScopeToAttrP": {
+                                            "attributes": {
+                                                "tnRtctrlAttrPName": "{{ context.set_rule }}"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }
+}

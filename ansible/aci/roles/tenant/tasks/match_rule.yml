@@ -7,7 +7,7 @@
     payload: "{{ lookup('template', 'match_rule.json.j2') }}"
     dn: "/api/mo/uni/tn-{{ tenant.name }}/subj-{{ rule.name }}"
 
-  loop: "{{ tenant.match_rules | default([]) }}"
+  loop: "{{ tenant.policies.match_rules | default([]) }}"
   loop_control:
     loop_var: rule
     label: "{{ [ tenant.name, rule.name ] | join('/') }}"

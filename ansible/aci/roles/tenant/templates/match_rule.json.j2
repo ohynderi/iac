@@ -9,14 +9,14 @@
             {% for tag in rule.tags | default( [] ) %}
             {
                 "tagAnnotation": {
-                "attributes": {
-                    "key": "{{ tag.name }}",
-                    "value": "{{ tag.value }}",
-                    "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
-                }
+                    "attributes": {
+                        "key": "{{ tag.name }}",
+                        "value": "{{ tag.value }}",
+                        "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+                    }
                 }
             }
-            {% if not loop.last %},{% endif %}      
+            {% if not loop.last %},{% endif %}
             {% endfor %}
             {% if rule.tags|default([])| length > 0 and rule.prefixes|default([])| length > 0 %},{% endif %}
             {% for prefix in rule.prefixes | default( [] ) %}

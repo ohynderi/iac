@@ -133,7 +133,9 @@
                         "status": "{{ 'deleted' if intf.state is defined and intf.state == 'absent' else 'created,modified' }}"
                       },
                       "children": [
-                        {% if intf.peer_leaf_id is defined and intf.ipg is defined %}
+                        {% set has_members = intf.peer_leaf_id is defined and intf.ipg is defined %}
+                        {% set has_conn_profiles = intf.connectivity_profiles | default( [] ) | length > 0 %}
+                        {% if has_members %}
                         {
                           "l3extMember":{
                             "attributes":{
@@ -151,6 +153,11 @@
                           }
                         }
                         {% endif %}
+                        {% if has_members and has_conn_profiles %},{% endif %}
+                        {% for peer in intf.connectivity_profiles | default( [] ) %}
+                        {% include "bgp_peer.json.j2" %}
+                        {% if not loop.last %},{% endif %}
+                        {% endfor %}
                       ]
                     }
                   }

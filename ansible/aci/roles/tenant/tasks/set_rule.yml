@@ -1,0 +1,18 @@
+---
+- name: Process Set Rules for tenant {{ tenant.name }}
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    path: "/api/mo/uni/tn-{{ tenant.name }}.json"
+    payload: "{{ lookup('template', 'set_rule.json.j2') }}"
+    dn: "/api/mo/uni/tn-{{ tenant.name }}/attr-{{ set_rule.name }}"
+
+  loop: "{{ tenant.policies.set_rules | default([]) }}"
+  loop_control:
+    loop_var: set_rule
+    label: "{{ [ tenant.name, set_rule.name ] | join('/') }}"
+
+  when:
+    - set_rule.state is defined
+
+  no_log: true

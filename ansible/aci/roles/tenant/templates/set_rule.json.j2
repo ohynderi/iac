@@ -1,0 +1,47 @@
+{
+    "rtctrlAttrP": {
+        "attributes": {
+            "descr": "{{ set_rule.description | default('') }}",
+            "status": "{{ 'deleted' if set_rule.state == 'absent' else 'created,modified' }}",
+            "name": "{{ set_rule.name }}"
+        },
+        "children": [
+            {% for tag in set_rule.tags | default( [] ) %}
+            {
+                "tagAnnotation": {
+                    "attributes": {
+                        "key": "{{ tag.name }}",
+                        "value": "{{ tag.value }}",
+                        "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+                    }
+                }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+            {% if set_rule.tags|default([])| length > 0 %},{% endif %}
+            {
+                "rtctrlSetASPath": {
+                    "attributes": {
+                        "criteria": "prepend",
+                        "type": "as-path"
+                    },
+                    "children": [
+                        {% for hop in set_rule.as_path | default( [] ) %}
+                        {
+                            "rtctrlSetASPathASN": {
+                                "attributes": {
+                                    "asn": "{{ hop.asn }}",
+                                    "descr": "{{ hop.description | default('') }}",
+                                    "order": "{{ hop.order }}",
+                                    "status": "{{ 'deleted' if hop.state is defined and hop.state == 'absent' else 'created,modified' }}"
+                                }
+                            }
+                        }
+                        {% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ]
+                }
+            }
+        ]
+    }
+}
