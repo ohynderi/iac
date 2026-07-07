@@ -5,8 +5,14 @@
 - name: Import tenant tasks
   include_tasks: tenant.yml
   when: 
+    - tenant_present
     - import_tenant_task
-    - import_tenant_task
+
+- name: Import match rule tasks
+  include_tasks: match_rule.yml
+  when:
+    - tenant_present
+    - import_match_rule_task
 
 - name: Import filter tasks
   include_tasks: filter.yml

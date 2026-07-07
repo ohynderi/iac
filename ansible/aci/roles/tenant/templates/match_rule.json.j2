@@ -1,0 +1,47 @@
+{
+    "rtctrlSubjP": {
+        "attributes": {
+            "descr": "{{ rule.description | default('') }}",
+            "status": "{{ 'deleted' if rule.state == 'absent' else 'created,modified' }}",
+            "name": "{{ rule.name }}"
+        },
+        "children": [
+            {% for tag in rule.tags | default( [] ) %}
+            {
+                "tagAnnotation": {
+                "attributes": {
+                    "key": "{{ tag.name }}",
+                    "value": "{{ tag.value }}",
+                    "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+                }
+                }
+            }
+            {% if not loop.last %},{% endif %}      
+            {% endfor %}
+            {% if rule.tags|default([])| length > 0 and rule.prefixes|default([])| length > 0 %},{% endif %}
+            {% for prefix in rule.prefixes | default( [] ) %}
+            {
+                "rtctrlMatchRtDest": {
+                    "attributes": {
+                        {% if prefix.aggregate is defined  %}
+                        "aggregate": "{{ 'yes' if prefix.aggregate else 'no' }}",
+                        {% endif %}
+                        {% if prefix.description is defined  %}
+                        "descr": "{{ prefix.description }}",
+                        {% endif %}
+                        {% if prefix.greater_equal_mask is defined  %}
+                        "fromPfxLen": "{{ prefix.greater_equal_mask }}",
+                        {% endif %}
+                        {% if prefix.less_equal_mask is defined  %}
+                        "toPfxLen": "{{ prefix.less_equal_mask }}",
+                        {% endif %}
+                        "status": "{{ 'deleted' if prefix.state is defined and prefix.state == 'absent' else 'created,modified' }}",
+                        "ip": "{{ prefix.ip }}"
+                    }
+                }
+            }
+            {% if not loop.last %},{% endif %} 
+            {% endfor %}
+        ]
+    }
+}

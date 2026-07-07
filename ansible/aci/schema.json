@@ -35,7 +35,8 @@
         "contracts": { "type": "array", "items": { "$ref": "#/$defs/contract" } },
         "filters": { "type": "array", "items": { "$ref": "#/$defs/filter" } },
         "application_profiles": { "type": "array", "items": { "$ref": "#/$defs/app_profile" } },
-        "l3outs": { "type": "array", "items": { "$ref": "#/$defs/l3out" } }
+        "l3outs": { "type": "array", "items": { "$ref": "#/$defs/l3out" } },
+        "match_rules": { "type": "array", "items": { "$ref": "#/$defs/match_rule" } }
       },
       "required": ["name"]
     },
@@ -422,6 +423,33 @@
         "state": { "$ref": "#/$defs/state" }
       },
       "required": ["name", "ethertype", "ip_protocol", "from_port", "to_port"]
+    },
+
+    "match_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "prefixes": { "type": "array", "items": { "$ref": "#/$defs/match_rule_prefix" } }
+      },
+      "required": ["name"]
+    },
+
+    "match_rule_prefix": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ip": { "type": "string" },
+        "description": { "type": "string" },
+        "aggregate": { "type": "boolean" },
+        "greater_equal_mask": { "type": "integer" },
+        "less_equal_mask": { "type": "integer" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["ip"]
     },
 
     "app_profile": {

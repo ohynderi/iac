@@ -4,10 +4,10 @@
   connection: local
   gather_facts: False
   vars:
-    aci_cfg_directory: intent/
+    aci_cfg_directory: /config/intent/
     schema_location: schema.json
-    enable_fabric_role: true
-    enable_node_role: true
+    enable_fabric_role: false
+    enable_node_role: false
     enable_tenant_role: true
 
   tasks:

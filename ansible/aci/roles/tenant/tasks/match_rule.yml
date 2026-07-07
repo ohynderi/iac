@@ -1,0 +1,19 @@
+---
+- name: Process Match Rules for tenant {{ tenant.name }}
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    path: "/api/mo/uni/tn-{{ tenant.name }}.json"
+    payload: "{{ lookup('template', 'match_rule.json.j2') }}"
+    dn: "/api/mo/uni/tn-{{ tenant.name }}/subj-{{ rule.name }}"
+
+  loop: "{{ tenant.match_rules | default([]) }}"
+  loop_control:
+    loop_var: rule
+    label: "{{ [ tenant.name, rule.name ] | join('/') }}"
+
+  when:
+    - rule.state is defined
+
+  no_log: true
+
