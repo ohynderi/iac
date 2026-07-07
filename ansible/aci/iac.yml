@@ -48,7 +48,7 @@
       loop: "{{ all_cfg_files.files }}"
       loop_control:
         label: "{{ item.path }}"
-      no_log: true
+      no_log: false
 
     #
     # Validing the intent against the schema
