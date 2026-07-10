@@ -13,6 +13,6 @@
     label: "{{ [ tenant.name, route_map.name ] | join('/') }}"
 
   when:
-    - route_map.state is defined
+    - route_map | has_nested_state
 
   no_log: true

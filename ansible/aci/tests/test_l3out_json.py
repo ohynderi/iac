@@ -622,6 +622,59 @@ def test_static_routes_are_broadcast_to_every_router(render):
     })
 
 
+def test_multiple_static_routes_are_broadcast_identically_to_two_routers(render):
+    # Both routers must end up with the exact same two routes, each with its
+    # own correct prefix/nexthop pair (not just the same count of children).
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {
+            "name": "np1",
+            "routers": [
+                {"pod": 1, "leaf_id": 101, "router_id": "1.1.1.1"},
+                {"pod": 1, "leaf_id": 102, "router_id": "1.1.1.2"},
+            ],
+            "static_routes": [
+                {"prefix": "0.0.0.0/0", "nhop": "10.0.0.254"},
+                {"prefix": "10.10.0.0/16", "nhop": "10.0.0.253"},
+            ],
+        },
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    expected_routes = [
+        {"ipRouteP": {
+            "attributes": {"ip": "0.0.0.0/0", "status": "created,modified"},
+            "children": [
+                {"ipNexthopP": {"attributes": {"nhAddr": "10.0.0.254", "status": "created,modified"}}},
+            ],
+        }},
+        {"ipRouteP": {
+            "attributes": {"ip": "10.10.0.0/16", "status": "created,modified"},
+            "children": [
+                {"ipNexthopP": {"attributes": {"nhAddr": "10.0.0.253", "status": "created,modified"}}},
+            ],
+        }},
+    ]
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extRsNodeL3OutAtt": {
+                        "attributes": {"rtrId": "1.1.1.1"},
+                        "children": expected_routes,
+                    }},
+                    {"l3extRsNodeL3OutAtt": {
+                        "attributes": {"rtrId": "1.1.1.2"},
+                        "children": expected_routes,
+                    }},
+                ]}},
+            ],
+        },
+    })
+
+
 def test_static_route_state_absent(render):
     l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
         {
@@ -644,6 +697,83 @@ def test_static_route_state_absent(render):
                             "children": [{"ipNexthopP": {"attributes": {"status": "deleted"}}}],
                         }},
                     ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_multiple_static_routes_state_absent_does_not_affect_other_routes(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {
+            "name": "np1",
+            "routers": [{"pod": 1, "leaf_id": 101, "router_id": "1.1.1.1"}],
+            "static_routes": [
+                {"prefix": "0.0.0.0/0", "nhop": "10.0.0.254"},
+                {"prefix": "10.10.0.0/16", "nhop": "10.0.0.253", "state": "absent"},
+            ],
+        },
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extRsNodeL3OutAtt": {"children": [
+                        {"ipRouteP": {
+                            "attributes": {"ip": "0.0.0.0/0", "status": "created,modified"},
+                            "children": [
+                                {"ipNexthopP": {"attributes": {"nhAddr": "10.0.0.254", "status": "created,modified"}}},
+                            ],
+                        }},
+                        {"ipRouteP": {
+                            "attributes": {"ip": "10.10.0.0/16", "status": "deleted"},
+                            "children": [
+                                {"ipNexthopP": {"attributes": {"nhAddr": "10.0.0.253", "status": "deleted"}}},
+                            ],
+                        }},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_static_routes_without_any_routers_render_nothing(render):
+    # Consequence of the broadcast-to-every-router design: with no routers to
+    # broadcast to, the static routes have nowhere to attach.
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "static_routes": [{"prefix": "0.0.0.0/0", "nhop": "10.0.0.254"}]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": []}},
+            ],
+        },
+    })
+
+
+def test_node_profile_without_static_routes_renders_empty_router_children(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "routers": [{"pod": 1, "leaf_id": 101, "router_id": "1.1.1.1"}]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extRsNodeL3OutAtt": {"children": []}},
                 ]}},
             ],
         },
@@ -1195,6 +1325,146 @@ def test_connectivity_profile_route_map_export_direction_and_state_absent(render
                                         "status": "deleted",
                                     },
                                 }},
+                            ]}},
+                        ]}},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_connectivity_profile_route_maps_both_directions_same_name(render):
+    # Same route_map name attached twice to one peer, once per direction --
+    # a common real-world pattern (one map used for both import and export).
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "interface_profiles": [
+            {"name": "ip1", "interfaces": {"l3-port": [
+                {"pod": 1, "leaf_id": 101, "port": "Eth1/1", "addr": "10.0.0.1/30",
+                 "connectivity_profiles": [{
+                     "peer_address": "2.2.2.2", "remote_asn": 65001,
+                     "route_maps": [
+                         {"name": "rm-to-isp", "direction": "import"},
+                         {"name": "rm-to-isp", "direction": "export"},
+                     ],
+                 }]},
+            ]}},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extLIfP": {"children": [
+                        {"l3extRsPathL3OutAtt": {"children": [
+                            {"bgpPeerP": {"children": [
+                                {"bgpAsP": {}},
+                                {"bgpRsPeerToProfile": {
+                                    "attributes": {
+                                        "tDn": "uni/tn-t1/prof-rm-to-isp",
+                                        "direction": "import",
+                                        "status": "created,modified",
+                                    },
+                                }},
+                                {"bgpRsPeerToProfile": {
+                                    "attributes": {
+                                        "tDn": "uni/tn-t1/prof-rm-to-isp",
+                                        "direction": "export",
+                                        "status": "created,modified",
+                                    },
+                                }},
+                            ]}},
+                        ]}},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_connectivity_profile_route_maps_different_names_per_peer(render):
+    # Sibling isolation across two different peers on the same interface,
+    # each with its own independent route_maps list.
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "interface_profiles": [
+            {"name": "ip1", "interfaces": {"l3-port": [
+                {"pod": 1, "leaf_id": 101, "port": "Eth1/1", "addr": "10.0.0.1/30",
+                 "connectivity_profiles": [
+                     {
+                         "peer_address": "2.2.2.2", "remote_asn": 65001,
+                         "route_maps": [{"name": "rm-peer-a", "direction": "import"}],
+                     },
+                     {
+                         "peer_address": "3.3.3.3", "remote_asn": 65002,
+                         "route_maps": [{"name": "rm-peer-b", "direction": "export"}],
+                     },
+                 ]},
+            ]}},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extLIfP": {"children": [
+                        {"l3extRsPathL3OutAtt": {"children": [
+                            {"bgpPeerP": {
+                                "attributes": {"addr": "2.2.2.2"},
+                                "children": [
+                                    {"bgpAsP": {}},
+                                    {"bgpRsPeerToProfile": {
+                                        "attributes": {"tDn": "uni/tn-t1/prof-rm-peer-a", "direction": "import"},
+                                    }},
+                                ],
+                            }},
+                            {"bgpPeerP": {
+                                "attributes": {"addr": "3.3.3.3"},
+                                "children": [
+                                    {"bgpAsP": {}},
+                                    {"bgpRsPeerToProfile": {
+                                        "attributes": {"tDn": "uni/tn-t1/prof-rm-peer-b", "direction": "export"},
+                                    }},
+                                ],
+                            }},
+                        ]}},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_connectivity_profile_route_maps_empty_list_omits_bgp_rs_peer_to_profile(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "interface_profiles": [
+            {"name": "ip1", "interfaces": {"l3-port": [
+                {"pod": 1, "leaf_id": 101, "port": "Eth1/1", "addr": "10.0.0.1/30",
+                 "connectivity_profiles": [{
+                     "peer_address": "2.2.2.2", "remote_asn": 65001, "route_maps": [],
+                 }]},
+            ]}},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extLIfP": {"children": [
+                        {"l3extRsPathL3OutAtt": {"children": [
+                            {"bgpPeerP": {"children": [
+                                {"bgpAsP": {}},
                             ]}},
                         ]}},
                     ]}},

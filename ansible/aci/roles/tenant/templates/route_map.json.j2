@@ -1,10 +1,15 @@
 {
     "rtctrlProfile": {
         "attributes": {
-            "descr": "{{ route_map.description | default('') }}",
-            "status": "{{ 'deleted' if route_map.state == 'absent' else 'created,modified' }}",
-            "name": "{{ route_map.name }}"
-        },
+            "name": "{{ route_map.name }}",
+            "status": "{{ 'deleted' if route_map.state is defined and route_map.state == 'absent' else 'created,modified' }}"
+            {% if route_map.state | default('present') != 'absent' %}
+            ,
+            "descr": "{{ route_map.description | default(route_map_default_description) }}"
+            {% endif %}
+        }
+        {% if route_map.state | default('present') != 'absent' %}
+        ,
         "children": [
             {% for tag in route_map.tags | default( [] ) %}
             {
@@ -20,23 +25,32 @@
             {% endfor %}
             {% if route_map.tags|default([])| length > 0 and route_map.contexts|default([])| length > 0 %},{% endif %}
             {% for context in route_map.contexts | default( [] ) %}
+            {% set has_match_rule = context.match_rule is defined %}
+            {% set has_set_rule = context.set_rule is defined %}
             {
                 "rtctrlCtxP": {
                     "attributes": {
                         "name": "{{ context.name }}",
                         "order": "{{ context.order }}",
                         "action": "{{ context.action }}",
-                        "descr": "{{ context.description | default('') }}",
                         "status": "{{ 'deleted' if context.state is defined and context.state == 'absent' else 'created,modified' }}"
+                        {% if context.state | default('present') != 'absent' %}
+                        ,
+                        "descr": "{{ context.description | default(route_map_context_default_description) }}"
+                        {% endif %}
                     },
                     "children": [
+                        {% if has_match_rule %}
                         {
                             "rtctrlRsCtxPToSubjP": {
                                 "attributes": {
                                     "tnRtctrlSubjPName": "{{ context.match_rule }}"
                                 }
                             }
-                        },
+                        }
+                        {% endif %}
+                        {% if has_match_rule and has_set_rule %},{% endif %}
+                        {% if has_set_rule %}
                         {
                             "rtctrlScope": {
                                 "attributes": {
@@ -54,11 +68,13 @@
                                 ]
                             }
                         }
+                        {% endif %}
                     ]
                 }
             }
             {% if not loop.last %},{% endif %}
             {% endfor %}
         ]
+        {% endif %}
     }
 }

@@ -244,13 +244,16 @@ A few things worth cleaning up or confirming before relying on this further:
    whether it's meant to replace this one or is a separate experiment.
 8. **`has_nested_state` rollout is now complete** across every tenant-role task that
    loops over intent objects: `epg.yml`, `ap.yml`, `tenant.yml`, `bd.yml`, `vrf.yml`,
-   `contract.yml`, `filter.yml`, and `l3out.yml` have all been switched from
-   `<item>.state is defined` to the nested-tree check. `epg.yml`, `bd.yml`, `vrf.yml`,
-   `contract.yml`, `filter.yml`, and `l3out.yml` use it unrestricted, since every
-   nested array in `epg`/`bd`/`vrf`/`contract` (tags, subjects, filters)/`filter`
-   (tags, entries)/`l3out` (tags, protocols, external_epgs, node_profiles) is
-   something their own template renders. `ap.yml` and `tenant.yml` are scoped to
-   `include_keys=['tags']` because `ap` nests `epgs` (handled by a separate task) and
-   `tenant` nests virtually everything else, so unrestricted `has_nested_state` there
+   `contract.yml`, `filter.yml`, `l3out.yml`, `match_rule.yml`, `set_rule.yml`, and
+   `route_map.yml` have all been switched from `<item>.state is defined` to the
+   nested-tree check. `epg.yml`, `bd.yml`, `vrf.yml`, `contract.yml`, `filter.yml`,
+   `l3out.yml`, `match_rule.yml`, `set_rule.yml`, and `route_map.yml` use it
+   unrestricted, since every nested array in `epg`/`bd`/`vrf`/`contract`
+   (tags, subjects, filters)/`filter` (tags, entries)/`l3out` (tags, protocols,
+   external_epgs, node_profiles)/`match_rule` (tags, prefixes)/`set_rule`
+   (tags, as_path)/`route_map` (tags, contexts) is something their own template
+   renders. `ap.yml` and `tenant.yml` are scoped to `include_keys=['tags']` because
+   `ap` nests `epgs` (handled by a separate task) and `tenant` nests virtually
+   everything else, so unrestricted `has_nested_state` there
    would fire on unrelated nested changes. `l3out.yml` used to be a two-task
    `include_keys`/`exclude_keys` case (see above) before its templates were merged.

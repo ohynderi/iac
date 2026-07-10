@@ -13,6 +13,6 @@
     label: "{{ [ tenant.name, set_rule.name ] | join('/') }}"
 
   when:
-    - set_rule.state is defined
+    - set_rule | has_nested_state
 
   no_log: true

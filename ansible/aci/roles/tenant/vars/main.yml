@@ -98,3 +98,11 @@ bgp_peer_default_ttl: 1
 bgp_peer_default_weight: 0
 bgp_peer_default_send_community: false
 bgp_peer_default_send_extended_community: false
+
+match_rule_default_description: ''
+
+set_rule_default_description: ''
+set_rule_as_path_default_description: ''
+
+route_map_default_description: ''
+route_map_context_default_description: ''

@@ -1,10 +1,15 @@
 {
     "rtctrlAttrP": {
         "attributes": {
-            "descr": "{{ set_rule.description | default('') }}",
-            "status": "{{ 'deleted' if set_rule.state == 'absent' else 'created,modified' }}",
-            "name": "{{ set_rule.name }}"
-        },
+            "name": "{{ set_rule.name }}",
+            "status": "{{ 'deleted' if set_rule.state is defined and set_rule.state == 'absent' else 'created,modified' }}"
+            {% if set_rule.state | default('present') != 'absent' %}
+            ,
+            "descr": "{{ set_rule.description | default(set_rule_default_description) }}"
+            {% endif %}
+        }
+        {% if set_rule.state | default('present') != 'absent' %}
+        ,
         "children": [
             {% for tag in set_rule.tags | default( [] ) %}
             {
@@ -18,7 +23,10 @@
             }
             {% if not loop.last %},{% endif %}
             {% endfor %}
-            {% if set_rule.tags|default([])| length > 0 %},{% endif %}
+
+            {% if set_rule.tags|default([])| length > 0 and set_rule.as_path|default([])| length > 0 %},{% endif %}
+
+            {% if set_rule.as_path|default([])| length > 0 %}
             {
                 "rtctrlSetASPath": {
                     "attributes": {
@@ -26,14 +34,17 @@
                         "type": "as-path"
                     },
                     "children": [
-                        {% for hop in set_rule.as_path | default( [] ) %}
+                        {% for hop in set_rule.as_path %}
                         {
                             "rtctrlSetASPathASN": {
                                 "attributes": {
                                     "asn": "{{ hop.asn }}",
-                                    "descr": "{{ hop.description | default('') }}",
                                     "order": "{{ hop.order }}",
                                     "status": "{{ 'deleted' if hop.state is defined and hop.state == 'absent' else 'created,modified' }}"
+                                    {% if hop.state | default('present') != 'absent' %}
+                                    ,
+                                    "descr": "{{ hop.description | default(set_rule_as_path_default_description) }}"
+                                    {% endif %}
                                 }
                             }
                         }
@@ -42,6 +53,8 @@
                     ]
                 }
             }
+            {% endif %}
         ]
+        {% endif %}
     }
 }

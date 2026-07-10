@@ -729,7 +729,8 @@
       "additionalProperties": false,
       "properties": {
         "prefix": { "type": "string" },
-        "nhop": { "type": "string" }
+        "nhop": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" }
       },
       "required": ["prefix", "nhop"]
     },

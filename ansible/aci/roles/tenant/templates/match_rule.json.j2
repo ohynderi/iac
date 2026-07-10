@@ -1,10 +1,15 @@
 {
     "rtctrlSubjP": {
         "attributes": {
-            "descr": "{{ rule.description | default('') }}",
-            "status": "{{ 'deleted' if rule.state == 'absent' else 'created,modified' }}",
-            "name": "{{ rule.name }}"
-        },
+            "name": "{{ rule.name }}",
+            "status": "{{ 'deleted' if rule.state is defined and rule.state == 'absent' else 'created,modified' }}"
+            {% if rule.state | default('present') != 'absent' %}
+            ,
+            "descr": "{{ rule.description | default(match_rule_default_description) }}"
+            {% endif %}
+        }
+        {% if rule.state | default('present') != 'absent' %}
+        ,
         "children": [
             {% for tag in rule.tags | default( [] ) %}
             {
@@ -23,25 +28,32 @@
             {
                 "rtctrlMatchRtDest": {
                     "attributes": {
-                        {% if prefix.aggregate is defined  %}
-                        "aggregate": "{{ 'yes' if prefix.aggregate else 'no' }}",
+                        "ip": "{{ prefix.ip }}",
+                        "status": "{{ 'deleted' if prefix.state is defined and prefix.state == 'absent' else 'created,modified' }}"
+                        {% if prefix.state | default('present') != 'absent' %}
+                        {% if prefix.aggregate is defined %}
+                        ,
+                        "aggregate": "{{ 'yes' if prefix.aggregate else 'no' }}"
                         {% endif %}
-                        {% if prefix.description is defined  %}
-                        "descr": "{{ prefix.description }}",
+                        {% if prefix.description is defined %}
+                        ,
+                        "descr": "{{ prefix.description }}"
                         {% endif %}
-                        {% if prefix.greater_equal_mask is defined  %}
-                        "fromPfxLen": "{{ prefix.greater_equal_mask }}",
+                        {% if prefix.greater_equal_mask is defined %}
+                        ,
+                        "fromPfxLen": "{{ prefix.greater_equal_mask }}"
                         {% endif %}
-                        {% if prefix.less_equal_mask is defined  %}
-                        "toPfxLen": "{{ prefix.less_equal_mask }}",
+                        {% if prefix.less_equal_mask is defined %}
+                        ,
+                        "toPfxLen": "{{ prefix.less_equal_mask }}"
                         {% endif %}
-                        "status": "{{ 'deleted' if prefix.state is defined and prefix.state == 'absent' else 'created,modified' }}",
-                        "ip": "{{ prefix.ip }}"
+                        {% endif %}
                     }
                 }
             }
-            {% if not loop.last %},{% endif %} 
+            {% if not loop.last %},{% endif %}
             {% endfor %}
         ]
+        {% endif %}
     }
 }
