@@ -163,8 +163,9 @@ Top level:
 
 Tenant object nests: `vrfs`, `bridge_domains` (with `subnets`, `l3outs`), `filters`
 (with `entries`), `contracts` (with `subjects`/filters), `application_profiles` (with
-`epgs`, each with `domains`/`interfaces`/`contracts`), and `l3outs` (with
-`external_epgs`, `node_profiles`/routers/static routes/interface profiles).
+`epgs`, each with `domains`/`interfaces`/`contracts`; and `esgs`, each with a `vrf`,
+member `epgs`, and `contracts`), and `l3outs` (with `external_epgs`,
+`node_profiles`/routers/static routes/interface profiles).
 
 Run `ansible-doc -t lookup ansible.utils.validate` / see `ansible.utils.jsonschema` for
 how validation errors are reported.

@@ -72,6 +72,19 @@
       }
       {% endfor %}
 
+      {% for label in bd.dhcp_relay_labels | default( [] ) %}
+      ,
+      {
+        "dhcpLbl": {
+          "attributes": {
+            "name": "{{ label.name }}",
+            "owner": "{{ label.scope | default(bd_dhcp_relay_label_default_scope) }}",
+            "status": "{{ 'deleted' if label.state is defined and label.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% endfor %}
+
     ]
     {% endif %}
   }

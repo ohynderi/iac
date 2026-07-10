@@ -287,6 +287,167 @@ def test_external_epg_state_absent_does_not_affect_other_epgs(render):
     })
 
 
+def test_external_epg_state_absent_omits_descr_and_pref_gr_memb(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [
+        {"name": "ext1", "state": "absent", "description": "should be omitted"},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"attributes": {
+                    "status": "deleted",
+                    "descr": ABSENT,
+                    "prefGrMemb": ABSENT,
+                }}},
+            ],
+        },
+    })
+
+
+def test_external_epg_state_absent_still_renders_children(render):
+    # A deleted external EPG's own relations/subnets/tags still render
+    # (deletion of the parent cascades on the APIC side), matching the
+    # pattern used for route_map contexts.
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [{
+        "name": "ext1", "state": "absent",
+        "tags": [{"name": "tag1", "value": "value1"}],
+        "subnets": [{"ip": "0.0.0.0/0"}],
+        "contracts": [{"name": "c1", "type": "consumer"}],
+    }]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"tagAnnotation": {}},
+                    {"l3extSubnet": {}},
+                    {"fvRsCons": {}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_external_epg_tags_render_with_state(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [{
+        "name": "ext1",
+        "tags": [
+            {"name": "tag1", "value": "value1"},
+            {"name": "tag2", "value": "value2", "state": "absent"},
+        ],
+    }]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"tagAnnotation": {"attributes": {"key": "tag1", "status": "created,modified"}}},
+                    {"tagAnnotation": {"attributes": {"key": "tag2", "status": "deleted"}}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_external_epg_tags_subnets_and_contracts_together(render):
+    # Regression test: with three independent optional loops (tags, subnets,
+    # contracts) and no guaranteed-first child, every pairwise comma boundary
+    # must fire only when both sides actually have content.
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [{
+        "name": "ext1",
+        "tags": [{"name": "tag1", "value": "value1"}],
+        "subnets": [{"ip": "0.0.0.0/0"}],
+        "contracts": [{"name": "c1", "type": "provider"}],
+    }]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"tagAnnotation": {"attributes": {"key": "tag1"}}},
+                    {"l3extSubnet": {"attributes": {"ip": "0.0.0.0/0"}}},
+                    {"fvRsProv": {"attributes": {"tnVzBrCPName": "c1"}}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_external_epg_tags_and_contracts_without_subnets(render):
+    # Comma boundary between tags and contracts must fire even when the
+    # middle group (subnets) is empty.
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [{
+        "name": "ext1",
+        "tags": [{"name": "tag1", "value": "value1"}],
+        "contracts": [{"name": "c1", "type": "consumer"}],
+    }]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"tagAnnotation": {}},
+                    {"fvRsCons": {}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_external_epg_subnet_description_default(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [
+        {"name": "ext1", "subnets": [{"ip": "0.0.0.0/0"}]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"l3extSubnet": {"attributes": {"descr": ""}}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_external_epg_subnet_description_override(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [
+        {"name": "ext1", "subnets": [{"ip": "0.0.0.0/0", "description": "my subnet"}]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"l3extSubnet": {"attributes": {"descr": "my subnet"}}},
+                ]}},
+            ],
+        },
+    })
+
+
 def test_external_epg_subnet_aggregate_and_scope_flags(render):
     l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [
         {"name": "ext1", "subnets": [{

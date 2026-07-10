@@ -47,7 +47,8 @@
       "properties": {
         "match_rules": { "type": "array", "items": { "$ref": "#/$defs/match_rule" } },
         "set_rules": { "type": "array", "items": { "$ref": "#/$defs/set_rule" } },
-        "route_maps": { "type": "array", "items": { "$ref": "#/$defs/route_map" } }
+        "route_maps": { "type": "array", "items": { "$ref": "#/$defs/route_map" } },
+        "mcast_route_maps": { "type": "array", "items": { "$ref": "#/$defs/mcast_route_map" } }
       }
     },
 
@@ -357,7 +358,8 @@
         "arp_flood": { "type": "boolean" },
         "subnets": { "type": "array", "items": { "$ref": "#/$defs/subnet" } },
         "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
-        "l3outs": { "type": "array", "items": { "$ref": "#/$defs/bd_l3out" } }
+        "l3outs": { "type": "array", "items": { "$ref": "#/$defs/bd_l3out" } },
+        "dhcp_relay_labels": { "type": "array", "items": { "$ref": "#/$defs/dhcp_relay_label" } }
       },
       "required": ["name", "vrf"]
     },
@@ -552,6 +554,33 @@
       "required": ["name", "order", "action"]
     },
 
+    "mcast_route_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "entries": { "type": "array", "items": { "$ref": "#/$defs/mcast_route_map_entry" } }
+      },
+      "required": ["name"]
+    },
+
+    "mcast_route_map_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "order": { "type": "integer" },
+        "group": { "type": "string" },
+        "rp": { "type": "string" },
+        "source": { "type": "string" },
+        "action": { "type": "string", "enum": ["permit", "deny"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["order", "group", "rp", "action"]
+    },
+
     "app_profile": {
       "type": "object",
       "additionalProperties": false,
@@ -560,7 +589,34 @@
         "state": { "$ref": "#/$defs/state" },
         "description": { "type": "string" },
         "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
-        "epgs": { "type": "array", "items": { "$ref": "#/$defs/epg" } }
+        "epgs": { "type": "array", "items": { "$ref": "#/$defs/epg" } },
+        "esgs": { "type": "array", "items": { "$ref": "#/$defs/esg" } }
+      },
+      "required": ["name"]
+    },
+
+    "esg": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "description": { "type": "string" },
+        "preferred_group_member": { "type": "string", "enum": ["include", "exclude"] },
+        "vrf": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "epgs": { "type": "array", "items": { "$ref": "#/$defs/esg_epg_selector" } },
+        "contracts": { "type": "array", "items": { "$ref": "#/$defs/vrf_contract" } }
+      },
+      "required": ["name", "vrf"]
+    },
+
+    "esg_epg_selector": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" }
       },
       "required": ["name"]
     },
@@ -580,6 +636,17 @@
         "contracts": { "type": "array", "items": { "$ref": "#/$defs/vrf_contract" } }
       },
       "required": ["name", "bd"]
+    },
+
+    "dhcp_relay_label": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "scope": { "type": "string", "enum": ["infra", "tenant"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["name"]
     },
 
     "domain": {
@@ -675,6 +742,7 @@
         "state": { "$ref": "#/$defs/state" },
         "description": { "type": "string" },
         "preferred_group_member": { "type": "string", "enum": ["include", "exclude"] },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
         "subnets": { "type": "array", "items": { "$ref": "#/$defs/external_subnet" } },
         "contracts": { "type": "array", "items": { "$ref": "#/$defs/vrf_contract" } }
       },
@@ -687,6 +755,7 @@
       "properties": {
         "ip": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
+        "description": { "type": "string" },
         "agg_export": { "type": "boolean" },
         "agg_inport": { "type": "boolean" },
         "agg_shared": { "type": "boolean" },

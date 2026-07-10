@@ -2,6 +2,7 @@ import_ap_task: true
 import_bd_task: true
 import_contract_task: true
 import_epg_task: true
+import_esg_task: true
 import_filter_task: true
 import_l3out_task: true
 import_tenant_task: true
@@ -9,6 +10,7 @@ import_vrf_task: true
 import_match_rule_task: true
 import_set_rule_task: true
 import_route_map_task: true
+import_mcast_route_map_task: true
 
 tenant_name_prefix: ''
 tenant_name_suffix: ''
@@ -59,11 +61,18 @@ bd_default_l3_unknown_multicast_routing_enabled: 'opt-flood'
 bd_default_l3_unknown_multicast_routing_disabled: 'flood'
 bd_default_arp_flood_routing_enabled: false
 bd_default_arp_flood_routing_disabled: true
+bd_dhcp_relay_label_default_scope: 'tenant'
 
 epg_name_prefix: ''
 epg_name_suffix: ''
 epg_default_description: ''
 epg_default_preferred_group_member: 'exclude'
+
+esg_name_prefix: ''
+esg_name_suffix: ''
+esg_default_description: ''
+esg_default_preferred_group_member: 'exclude'
+
 domain_immediacy: 'pre-provision'
 domain_deployment: 'immediate'
 interface_deployment: 'immediate'
@@ -84,6 +93,7 @@ l3_interface_default_mtu: 'inherit'
 external_epg_default_description: ''
 external_epg_default_preferred_group_member: 'exclude'
 
+external_subnet_default_description: ''
 external_subnet_default_agg_export: false
 external_subnet_default_agg_inport: false
 external_subnet_default_agg_shared: false
@@ -106,3 +116,6 @@ set_rule_as_path_default_description: ''
 
 route_map_default_description: ''
 route_map_context_default_description: ''
+
+mcast_route_map_default_description: ''
+mcast_route_map_entry_default_source: '0.0.0.0'

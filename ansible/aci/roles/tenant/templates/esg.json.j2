@@ -1,0 +1,74 @@
+{
+  "fvESg": {
+    "attributes": {
+      "name": "{{ esg_name }}",
+      "status": "{{ 'deleted' if esg.state is defined and esg.state == 'absent' else 'created,modified' }}",
+      "descr": "{{ esg.description | default(esg_default_description) }}",
+      "prefGrMemb": "{{ esg.preferred_group_member | default(esg_default_preferred_group_member) }}"
+    }
+    {% if esg.state | default('present') != 'absent' %}
+    ,
+    "children": [
+      {
+        "fvRsScope": {
+          "attributes": {
+            "tnFvCtxName": "{{ esg.vrf }}",
+            "status": "created,modified"
+          }
+        }
+      }
+
+      {% for tag in esg.tags | default( [] ) %}
+      ,
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% endfor %}
+
+      {% for member_epg in esg.epgs | default( [] ) %}
+      ,
+      {
+        "fvEPgSelector": {
+          "attributes": {
+            "name": "{{ member_epg.name }}",
+            "matchEpgDn": "uni/tn-{{ tenant.name }}/ap-{{ ap.name }}/epg-{{ member_epg.name }}",
+            "status": "{{ 'deleted' if member_epg.state is defined and member_epg.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% endfor %}
+
+      {% for contract in esg.contracts | default( [] ) %}
+      {% if contract.type == 'consumer' %}
+      ,
+      {
+        "fvRsCons": {
+          "attributes": {
+            "tnVzBrCPName": "{{ contract.name }}",
+            "status": "{{ 'deleted' if contract.state is defined and contract.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% else %}
+      ,
+      {
+        "fvRsProv": {
+          "attributes": {
+            "tnVzBrCPName": "{{ contract.name }}",
+            "status": "{{ 'deleted' if contract.state is defined and contract.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% endif %}
+      {% endfor %}
+
+    ]
+    {% endif %}
+  }
+}

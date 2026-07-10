@@ -327,3 +327,77 @@ def test_subnet_state_absent_does_not_affect_other_children(render):
             ],
         },
     })
+
+
+def test_dhcp_relay_label_renders_with_default_scope(render):
+    bd = {"name": "bd1", "vrf": "vrf1", "dhcp_relay_labels": [{"name": "dhcp1"}]}
+    body = render("bd.json.j2", bd_name="bd1", bd=bd)
+
+    assert_matches(body, {
+        "fvBD": {
+            "children": [
+                {"fvRsCtx": {}},
+                {
+                    "dhcpLbl": {
+                        "attributes": {
+                            "name": "dhcp1",
+                            "owner": "tenant",
+                            "status": "created,modified",
+                        },
+                    },
+                },
+            ],
+        },
+    })
+
+
+def test_dhcp_relay_label_scope_override(render):
+    bd = {"name": "bd1", "vrf": "vrf1", "dhcp_relay_labels": [{"name": "dhcp1", "scope": "infra"}]}
+    body = render("bd.json.j2", bd_name="bd1", bd=bd)
+
+    assert_matches(body, {
+        "fvBD": {
+            "children": [
+                {"fvRsCtx": {}},
+                {"dhcpLbl": {"attributes": {"owner": "infra"}}},
+            ],
+        },
+    })
+
+
+def test_dhcp_relay_label_state_absent(render):
+    bd = {"name": "bd1", "vrf": "vrf1", "dhcp_relay_labels": [{"name": "dhcp1", "state": "absent"}]}
+    body = render("bd.json.j2", bd_name="bd1", bd=bd)
+
+    assert_matches(body, {
+        "fvBD": {
+            "children": [
+                {"fvRsCtx": {}},
+                {"dhcpLbl": {"attributes": {"status": "deleted"}}},
+            ],
+        },
+    })
+
+
+def test_dhcp_relay_label_state_absent_does_not_affect_other_children(render):
+    bd = {
+        "name": "bd1",
+        "vrf": "vrf1",
+        "subnets": [{"ip": "10.0.0.1/24"}],
+        "dhcp_relay_labels": [
+            {"name": "dhcp1", "state": "absent"},
+            {"name": "dhcp2", "scope": "infra"},
+        ],
+    }
+    body = render("bd.json.j2", bd_name="bd1", bd=bd)
+
+    assert_matches(body, {
+        "fvBD": {
+            "children": [
+                {"fvRsCtx": {}},
+                {"fvSubnet": {"attributes": {"ip": "10.0.0.1/24", "status": "created,modified"}}},
+                {"dhcpLbl": {"attributes": {"name": "dhcp1", "status": "deleted"}}},
+                {"dhcpLbl": {"attributes": {"name": "dhcp2", "owner": "infra", "status": "created,modified"}}},
+            ],
+        },
+    })

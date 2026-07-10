@@ -1,0 +1,47 @@
+{
+    "pimRouteMapPol": {
+        "attributes": {
+            "name": "{{ mcast_route_map.name }}",
+            "status": "{{ 'deleted' if mcast_route_map.state is defined and mcast_route_map.state == 'absent' else 'created,modified' }}"
+            {% if mcast_route_map.state | default('present') != 'absent' %}
+            ,
+            "descr": "{{ mcast_route_map.description | default(mcast_route_map_default_description) }}"
+            {% endif %}
+        }
+        {% if mcast_route_map.state | default('present') != 'absent' %}
+        ,
+        "children": [
+            {% for tag in mcast_route_map.tags | default( [] ) %}
+            {
+                "tagAnnotation": {
+                    "attributes": {
+                        "key": "{{ tag.name }}",
+                        "value": "{{ tag.value }}",
+                        "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+                    }
+                }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+
+            {% if mcast_route_map.tags|default([])| length > 0 and mcast_route_map.entries|default([])| length > 0 %},{% endif %}
+
+            {% for entry in mcast_route_map.entries | default( [] ) %}
+            {
+                "pimRouteMapEntry": {
+                    "attributes": {
+                        "order": "{{ entry.order }}",
+                        "grp": "{{ entry.group }}",
+                        "rp": "{{ entry.rp }}",
+                        "src": "{{ entry.source | default(mcast_route_map_entry_default_source) }}",
+                        "action": "{{ entry.action }}",
+                        "status": "{{ 'deleted' if entry.state is defined and entry.state == 'absent' else 'created,modified' }}"
+                    }
+                }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+        ]
+        {% endif %}
+    }
+}

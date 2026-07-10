@@ -1,0 +1,23 @@
+---
+- name: Process ESG for tenant {{ tenant.name }}
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    ap: "{{ ap_esg_pair.0 }}"
+    esg: "{{ ap_esg_pair.1 }}"
+    ap_name: "{{ ap_name_prefix ~ ap.name ~ ap_name_suffix }}"
+    esg_name: "{{ esg_name_prefix ~ esg.name ~ esg_name_suffix }}"
+    payload: "{{ lookup('template', 'esg.json.j2') }}"
+    path: "/api/mo/uni/tn-{{ tenant.name }}/ap-{{ ap.name }}.json"
+    dn: "/api/mo/uni/tn-{{ tenant.name }}/ap-{{ ap.name }}/esg-{{ esg.name }}"
+
+  loop: "{{ query('subelements', tenant.application_profiles | default([]), 'esgs', {'skip_missing': True}) }}"
+  loop_control:
+    loop_var: ap_esg_pair
+    label: "{{ [ tenant.name, ap.name, esg.name ] | join('/') }}"
+
+  when:
+    - esg | has_nested_state
+    - ( ap.state is defined and ap.state != 'absent' ) or ap.state is not defined
+
+  no_log: false

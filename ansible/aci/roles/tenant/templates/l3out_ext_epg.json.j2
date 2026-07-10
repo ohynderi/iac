@@ -1,17 +1,39 @@
+{% set has_tags = epg.tags|default([])|length > 0 %}
+{% set has_subnets = epg.subnets|default([])|length > 0 %}
+{% set has_contracts = epg.contracts|default([])|length > 0 %}
 {
   "l3extInstP":{
     "attributes":{
       "name": "{{ epg.name }}",
-      "descr": "{{ epg.description | default(external_epg_default_description) }}",
-      "prefGrMemb": "{{ epg.preferred_group_member | default(external_epg_default_preferred_group_member) }}",
       "status": "{{ 'deleted' if epg.state is defined and epg.state == 'absent' else 'created,modified' }}"
+      {% if epg.state | default('present') != 'absent' %}
+      ,
+      "descr": "{{ epg.description | default(external_epg_default_description) }}",
+      "prefGrMemb": "{{ epg.preferred_group_member | default(external_epg_default_preferred_group_member) }}"
+      {% endif %}
     },
     "children": [
+      {% for tag in epg.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+      {% if has_tags and has_subnets %},{% endif %}
+
       {% for subnet in epg.subnets | default( [] ) %}
       {
         "l3extSubnet":{
           "attributes":{
             "ip": "{{ subnet.ip }}",
+            "descr": "{{ subnet.description | default(external_subnet_default_description) }}",
             "aggregate": "{{ [
                   'export-rtctrl' if subnet.agg_export|default(external_subnet_default_agg_export) else None,
                   'inport-rtctrl' if subnet.agg_inport|default(external_subnet_default_agg_inport) else None,
@@ -30,7 +52,7 @@
       {% if not loop.last %},{% endif %}
       {% endfor %}
 
-      {% if epg.subnets|default([])|length > 0 and epg.contracts|default([])|length > 0 %},{% endif %}
+      {% if (has_tags or has_subnets) and has_contracts %},{% endif %}
 
       {% for contract in epg.contracts | default( [] ) %}
       {% if contract.type == 'consumer' %}
