@@ -82,6 +82,15 @@ router_default_loopback: false
 l3_interface_default_mtu: 'inherit'
 
 external_epg_default_description: ''
+external_epg_default_preferred_group_member: 'exclude'
+
+external_subnet_default_agg_export: false
+external_subnet_default_agg_inport: false
+external_subnet_default_agg_shared: false
+external_subnet_default_export_route_ctrl: false
+external_subnet_default_external_epg: false
+external_subnet_default_shared_route_ctrl: false
+external_subnet_default_shared_security_import: false
 
 bgp_peer_default_description: ''
 bgp_peer_default_bfd: false

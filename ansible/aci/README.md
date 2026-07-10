@@ -91,17 +91,24 @@ when:
 ```
 
 It also accepts `include_keys` / `exclude_keys` (mutually exclusive) to restrict the
-search to specific top-level branches of the item — useful when more than one task
-renders different slices of the same looped item (e.g. `l3out.yml` has one task for
-node/interface profiles and another for `external_epgs`, both looping over the same
-`tenant.l3outs`; without scoping, a `state` change in either branch would re-trigger
-both tasks):
+search to specific top-level branches of the item — useful when an object nests a
+substructure owned/rendered by a different task, e.g. `ap.yml` and `tenant.yml` scope
+to `include_keys=['tags']` since `ap` nests `epgs` (its own task) and `tenant` nests
+almost everything else:
 
 ```yaml
 when:
-  - l3out | has_nested_state(exclude_keys=['external_epgs'])   # node/interface-profile task
-  - l3out | has_nested_state(include_keys=['external_epgs'])   # external-EPG task
+  - ap | has_nested_state(include_keys=['tags'])
 ```
+
+The filters were also designed to support two separate tasks each rendering a
+different slice of the same looped item (matching `exclude_keys`/`include_keys`
+pairs, one per task) — `l3out.yml` used to be structured that way, with one task for
+node/interface profiles and another for `external_epgs`, both looping over
+`tenant.l3outs`. That's no longer needed: the two templates were merged (the
+external-EPG rendering is now `{% include "l3out_ext_epg.json.j2" %}`'d directly into
+`l3out.json.j2`, the same way `bgp_peer.json.j2` is included), so `l3out.yml` is back
+to a single task with an unrestricted `has_nested_state` check.
 
 The item's own root-level `state` key is always honored regardless of these filters.
 
@@ -239,15 +246,11 @@ A few things worth cleaning up or confirming before relying on this further:
    loops over intent objects: `epg.yml`, `ap.yml`, `tenant.yml`, `bd.yml`, `vrf.yml`,
    `contract.yml`, `filter.yml`, and `l3out.yml` have all been switched from
    `<item>.state is defined` to the nested-tree check. `epg.yml`, `bd.yml`, `vrf.yml`,
-   `contract.yml`, and `filter.yml` use it unrestricted, since every nested array in
-   `epg`/`bd`/`vrf`/`contract` (tags, subjects, filters)/`filter` (tags, entries) is
+   `contract.yml`, `filter.yml`, and `l3out.yml` use it unrestricted, since every
+   nested array in `epg`/`bd`/`vrf`/`contract` (tags, subjects, filters)/`filter`
+   (tags, entries)/`l3out` (tags, protocols, external_epgs, node_profiles) is
    something their own template renders. `ap.yml` and `tenant.yml` are scoped to
    `include_keys=['tags']` because `ap` nests `epgs` (handled by a separate task) and
    `tenant` nests virtually everything else, so unrestricted `has_nested_state` there
-   would fire on unrelated nested changes. `l3out.yml` is the one case with two tasks
-   sharing the same `tenant.l3outs` loop var: the node/interface-profile task uses
-   `has_nested_state(exclude_keys=['external_epgs'])` (it renders everything except
-   external EPGs) and the external-EPG task uses
-   `has_nested_state(include_keys=['external_epgs'])` (it renders only external EPGs) —
-   this is the dual-task case the `include_keys`/`exclude_keys` mutual-exclusion option
-   was originally added for.
+   would fire on unrelated nested changes. `l3out.yml` used to be a two-task
+   `include_keys`/`exclude_keys` case (see above) before its templates were merged.

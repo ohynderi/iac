@@ -1,43 +1,57 @@
 {
-  "l3extOut": {
-    "attributes": {
-      "name": "{{ l3out_name }}"
+  "l3extInstP":{
+    "attributes":{
+      "name": "{{ epg.name }}",
+      "descr": "{{ epg.description | default(external_epg_default_description) }}",
+      "prefGrMemb": "{{ epg.preferred_group_member | default(external_epg_default_preferred_group_member) }}",
+      "status": "{{ 'deleted' if epg.state is defined and epg.state == 'absent' else 'created,modified' }}"
     },
     "children": [
-      {% for epg in l3out.external_epgs | default( [] ) %}
+      {% for subnet in epg.subnets | default( [] ) %}
       {
-        "l3extInstP":{
+        "l3extSubnet":{
           "attributes":{
-            "name": "{{ epg.name }}",
-            "descr": "{{ epg.description | default(external_epg_default_description) }}",
-            "status": "{{ 'deleted' if epg.state is defined and epg.state == 'absent' else 'created,modified' }}"
-          },
-          "children": [
-            {% for subnet in epg.subnets | default( [] ) %}
-            {
-              "l3extSubnet":{
-                "attributes":{
-                  "ip": "{{ subnet.ip }}",
-                  "aggregate": "{{ [ 
-                        'export-rtctrl' if subnet.agg_export|default(False) else None,
-                        'inport-rtctrl' if subnet.agg_inport|default(False) else None, 
-                        'shared-rtctrl' if subnet.agg_shared|default(False) else None
-                    ] | select | join(',') }}",
-                  "scope": "{{ [ 
-                        'export-rtctrl' if subnet.export_route_ctrl|default(False) else None,
-                        'import-security' if subnet.external_epg|default(False) else None, 
-                        'shared-rtctrl' if subnet.shared_route_ctrl|default(False) else None,
-                        'shared-security' if subnet.shared_security_import|default(False) else None,
-                    ] | select | join(',') }}",
-                  "status": "{{ 'deleted' if subnet.state is defined and subnet.state == 'absent' else 'created,modified' }}"
-                }
-              }
-            }
-            {% if not loop.last %},{% endif %}
-            {% endfor %}
-          ]
+            "ip": "{{ subnet.ip }}",
+            "aggregate": "{{ [
+                  'export-rtctrl' if subnet.agg_export|default(external_subnet_default_agg_export) else None,
+                  'inport-rtctrl' if subnet.agg_inport|default(external_subnet_default_agg_inport) else None,
+                  'shared-rtctrl' if subnet.agg_shared|default(external_subnet_default_agg_shared) else None
+              ] | select | join(',') }}",
+            "scope": "{{ [
+                  'export-rtctrl' if subnet.export_route_ctrl|default(external_subnet_default_export_route_ctrl) else None,
+                  'import-security' if subnet.external_epg|default(external_subnet_default_external_epg) else None,
+                  'shared-rtctrl' if subnet.shared_route_ctrl|default(external_subnet_default_shared_route_ctrl) else None,
+                  'shared-security' if subnet.shared_security_import|default(external_subnet_default_shared_security_import) else None,
+              ] | select | join(',') }}",
+            "status": "{{ 'deleted' if subnet.state is defined and subnet.state == 'absent' else 'created,modified' }}"
+          }
         }
       }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+      {% if epg.subnets|default([])|length > 0 and epg.contracts|default([])|length > 0 %},{% endif %}
+
+      {% for contract in epg.contracts | default( [] ) %}
+      {% if contract.type == 'consumer' %}
+      {
+        "fvRsCons": {
+          "attributes": {
+            "tnVzBrCPName": "{{ contract.name }}",
+            "status": "{{ 'deleted' if contract.state is defined and contract.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% else %}
+      {
+        "fvRsProv": {
+          "attributes": {
+            "tnVzBrCPName": "{{ contract.name }}",
+            "status": "{{ 'deleted' if contract.state is defined and contract.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% endif %}
       {% if not loop.last %},{% endif %}
       {% endfor %}
     ]

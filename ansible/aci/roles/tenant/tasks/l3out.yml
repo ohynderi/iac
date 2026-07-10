@@ -15,26 +15,6 @@
     label: "{{ [ tenant.name, l3out.name ] | join('/') }}"
 
   when:
-    - l3out | has_nested_state(exclude_keys=['external_epgs'])
-
-  no_log: true
-
-- name: Process L3Out External EPG for tenant {{ tenant.name }}
-  include_tasks: wrapper_api_call.yml
-
-  vars:
-    path: "/api/mo/uni/tn-{{ tenant.name }}.json"
-    payload: "{{ lookup('template', 'l3out_ext_epg.json.j2') }}"
-    dn: "/api/mo/uni/tn-{{ tenant.name }}/out-{{ l3out.name }}/instP-*"
-    l3out_name: "{{ l3out_name_prefix ~ l3out.name ~ l3out_name_suffix }}"
-
-
-  loop: "{{ tenant.l3outs | default([]) }}"
-  loop_control:
-    loop_var: l3out
-    label: "{{ [ tenant.name, l3out.name ] | join('/') }}"
-
-  when:
-    - l3out | has_nested_state(include_keys=['external_epgs'])
+    - l3out | has_nested_state
 
   no_log: true

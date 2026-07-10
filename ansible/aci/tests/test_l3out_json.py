@@ -125,6 +125,265 @@ def test_tags_render_with_state(render):
     })
 
 
+def test_external_epg_renders_with_defaults(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [{"name": "ext1"}]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {
+                    "l3extInstP": {
+                        "attributes": {
+                            "name": "ext1",
+                            "descr": "",
+                            "status": "created,modified",
+                        },
+                        "children": [],
+                    },
+                },
+            ],
+        },
+    })
+
+
+def test_external_epg_description_override(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d",
+              "external_epgs": [{"name": "ext1", "description": "my ext epg"}]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"attributes": {"descr": "my ext epg"}}},
+            ],
+        },
+    })
+
+
+def test_external_epg_preferred_group_member_default(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [{"name": "ext1"}]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"attributes": {"prefGrMemb": "exclude"}}},
+            ],
+        },
+    })
+
+
+def test_external_epg_preferred_group_member_override(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d",
+              "external_epgs": [{"name": "ext1", "preferred_group_member": "include"}]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"attributes": {"prefGrMemb": "include"}}},
+            ],
+        },
+    })
+
+
+def test_external_epg_contracts_consumer_and_provider_with_state(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [
+        {"name": "ext1", "contracts": [
+            {"name": "c1", "type": "consumer"},
+            {"name": "c2", "type": "provider", "state": "absent"},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"fvRsCons": {"attributes": {"tnVzBrCPName": "c1", "status": "created,modified"}}},
+                    {"fvRsProv": {"attributes": {"tnVzBrCPName": "c2", "status": "deleted"}}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_external_epg_subnets_and_contracts_together(render):
+    # Regression test: the comma between the subnets loop and the contracts
+    # loop is only emitted when both lists are non-empty.
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [
+        {
+            "name": "ext1",
+            "subnets": [{"ip": "0.0.0.0/0"}],
+            "contracts": [{"name": "c1", "type": "provider"}],
+        },
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"l3extSubnet": {"attributes": {"ip": "0.0.0.0/0"}}},
+                    {"fvRsProv": {"attributes": {"tnVzBrCPName": "c1"}}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_external_epg_contract_state_absent_does_not_affect_other_contracts(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [
+        {"name": "ext1", "contracts": [
+            {"name": "c1", "type": "consumer", "state": "absent"},
+            {"name": "c2", "type": "consumer"},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"fvRsCons": {"attributes": {"tnVzBrCPName": "c1", "status": "deleted"}}},
+                    {"fvRsCons": {"attributes": {"tnVzBrCPName": "c2", "status": "created,modified"}}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_external_epg_state_absent_does_not_affect_other_epgs(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [
+        {"name": "ext1", "state": "absent"},
+        {"name": "ext2"},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"attributes": {"name": "ext1", "status": "deleted"}}},
+                {"l3extInstP": {"attributes": {"name": "ext2", "status": "created,modified"}}},
+            ],
+        },
+    })
+
+
+def test_external_epg_subnet_aggregate_and_scope_flags(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [
+        {"name": "ext1", "subnets": [{
+            "ip": "0.0.0.0/0",
+            "agg_export": True, "agg_inport": True, "agg_shared": True,
+            "export_route_ctrl": True, "external_epg": True,
+            "shared_route_ctrl": True, "shared_security_import": True,
+        }]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"l3extSubnet": {"attributes": {
+                        "ip": "0.0.0.0/0",
+                        "aggregate": "export-rtctrl,inport-rtctrl,shared-rtctrl",
+                        "scope": "export-rtctrl,import-security,shared-rtctrl,shared-security",
+                        "status": "created,modified",
+                    }}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_external_epg_subnet_with_all_flags_off(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [
+        {"name": "ext1", "subnets": [{"ip": "0.0.0.0/0"}]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"l3extSubnet": {"attributes": {"aggregate": "", "scope": ""}}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_external_epg_subnet_state_absent_does_not_affect_other_subnets(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "external_epgs": [
+        {"name": "ext1", "subnets": [
+            {"ip": "0.0.0.0/0", "state": "absent"},
+            {"ip": "10.0.0.0/8"},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extInstP": {"children": [
+                    {"l3extSubnet": {"attributes": {"ip": "0.0.0.0/0", "status": "deleted"}}},
+                    {"l3extSubnet": {"attributes": {"ip": "10.0.0.0/8", "status": "created,modified"}}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_tags_and_external_epgs_and_node_profiles_together(render):
+    # Regression test for the l3out/l3out_ext_epg task merge: external_epgs
+    # is now rendered by this same template, alongside tags and node
+    # profiles, and each independent block's leading comma must still only
+    # fire when that specific block is non-empty.
+    l3out = {
+        "name": "l3out1", "vrf": "v", "domain": "d",
+        "tags": [{"name": "tag1", "value": "value1"}],
+        "external_epgs": [{"name": "ext1"}],
+        "node_profiles": [{"name": "np1"}],
+    }
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"tagAnnotation": {}},
+                {"l3extInstP": {}},
+                {"l3extLNodeP": {}},
+            ],
+        },
+    })
+
+
 def test_ospf_renders_with_defaults(render):
     l3out = {"name": "l3out1", "vrf": "v", "domain": "d",
               "protocols": {"ospf": {"area_id": "0.0.0.1"}}}
@@ -669,6 +928,274 @@ def test_connectivity_profile_with_local_asn_and_route_maps(render):
                                     }},
                                 ],
                             }},
+                        ]}},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_connectivity_profile_description_override(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "interface_profiles": [
+            {"name": "ip1", "interfaces": {"l3-port": [
+                {"pod": 1, "leaf_id": 101, "port": "Eth1/1", "addr": "10.0.0.1/30",
+                 "connectivity_profiles": [{
+                     "peer_address": "2.2.2.2", "remote_asn": 65001, "description": "my peer",
+                 }]},
+            ]}},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extLIfP": {"children": [
+                        {"l3extRsPathL3OutAtt": {"children": [
+                            {"bgpPeerP": {"attributes": {"descr": "my peer"}}},
+                        ]}},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_connectivity_profile_send_community_only(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "interface_profiles": [
+            {"name": "ip1", "interfaces": {"l3-port": [
+                {"pod": 1, "leaf_id": 101, "port": "Eth1/1", "addr": "10.0.0.1/30",
+                 "connectivity_profiles": [{
+                     "peer_address": "2.2.2.2", "remote_asn": 65001, "send_community": True,
+                 }]},
+            ]}},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extLIfP": {"children": [
+                        {"l3extRsPathL3OutAtt": {"children": [
+                            {"bgpPeerP": {"attributes": {"ctrl": "send-com"}}},
+                        ]}},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_connectivity_profile_send_extended_community_only(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "interface_profiles": [
+            {"name": "ip1", "interfaces": {"l3-port": [
+                {"pod": 1, "leaf_id": 101, "port": "Eth1/1", "addr": "10.0.0.1/30",
+                 "connectivity_profiles": [{
+                     "peer_address": "2.2.2.2", "remote_asn": 65001, "send_extended_community": True,
+                 }]},
+            ]}},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extLIfP": {"children": [
+                        {"l3extRsPathL3OutAtt": {"children": [
+                            {"bgpPeerP": {"attributes": {"ctrl": "send-ext-com"}}},
+                        ]}},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_connectivity_profile_ttl_and_weight_overrides(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "interface_profiles": [
+            {"name": "ip1", "interfaces": {"l3-port": [
+                {"pod": 1, "leaf_id": 101, "port": "Eth1/1", "addr": "10.0.0.1/30",
+                 "connectivity_profiles": [{
+                     "peer_address": "2.2.2.2", "remote_asn": 65001, "ttl": 16, "weight": 100,
+                 }]},
+            ]}},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extLIfP": {"children": [
+                        {"l3extRsPathL3OutAtt": {"children": [
+                            {"bgpPeerP": {"attributes": {"ttl": "16", "weight": "100"}}},
+                        ]}},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_connectivity_profile_state_absent(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "interface_profiles": [
+            {"name": "ip1", "interfaces": {"l3-port": [
+                {"pod": 1, "leaf_id": 101, "port": "Eth1/1", "addr": "10.0.0.1/30",
+                 "connectivity_profiles": [{
+                     "peer_address": "2.2.2.2", "remote_asn": 65001, "state": "absent",
+                 }]},
+            ]}},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extLIfP": {"children": [
+                        {"l3extRsPathL3OutAtt": {"children": [
+                            {"bgpPeerP": {"attributes": {"status": "deleted"}}},
+                        ]}},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_multiple_connectivity_profiles_state_absent_does_not_affect_other_peers(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "interface_profiles": [
+            {"name": "ip1", "interfaces": {"l3-port": [
+                {"pod": 1, "leaf_id": 101, "port": "Eth1/1", "addr": "10.0.0.1/30",
+                 "connectivity_profiles": [
+                     {"peer_address": "2.2.2.2", "remote_asn": 65001, "state": "absent"},
+                     {"peer_address": "3.3.3.3", "remote_asn": 65002},
+                 ]},
+            ]}},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extLIfP": {"children": [
+                        {"l3extRsPathL3OutAtt": {"children": [
+                            {"bgpPeerP": {"attributes": {"addr": "2.2.2.2", "status": "deleted"}}},
+                            {"bgpPeerP": {"attributes": {"addr": "3.3.3.3", "status": "created,modified"}}},
+                        ]}},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_connectivity_profile_route_maps_without_local_asn(render):
+    # Regression test: the comma before the route_maps block must not depend
+    # on local_asn also being set (bgpAsP is the guaranteed first child).
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "interface_profiles": [
+            {"name": "ip1", "interfaces": {"l3-port": [
+                {"pod": 1, "leaf_id": 101, "port": "Eth1/1", "addr": "10.0.0.1/30",
+                 "connectivity_profiles": [{
+                     "peer_address": "2.2.2.2", "remote_asn": 65001,
+                     "route_maps": [{"name": "rm1", "direction": "import"}],
+                 }]},
+            ]}},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extLIfP": {"children": [
+                        {"l3extRsPathL3OutAtt": {"children": [
+                            {"bgpPeerP": {"children": [
+                                {"bgpAsP": {}},
+                                {"bgpRsPeerToProfile": {"attributes": {"direction": "import"}}},
+                            ]}},
+                        ]}},
+                    ]}},
+                ]}},
+            ],
+        },
+    })
+
+
+def test_connectivity_profile_route_map_export_direction_and_state_absent(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
+        {"name": "np1", "interface_profiles": [
+            {"name": "ip1", "interfaces": {"l3-port": [
+                {"pod": 1, "leaf_id": 101, "port": "Eth1/1", "addr": "10.0.0.1/30",
+                 "connectivity_profiles": [{
+                     "peer_address": "2.2.2.2", "remote_asn": 65001,
+                     "route_maps": [
+                         {"name": "rm1", "direction": "export"},
+                         {"name": "rm2", "direction": "import", "state": "absent"},
+                     ],
+                 }]},
+            ]}},
+        ]},
+    ]}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"l3extLNodeP": {"children": [
+                    {"l3extLIfP": {"children": [
+                        {"l3extRsPathL3OutAtt": {"children": [
+                            {"bgpPeerP": {"children": [
+                                {"bgpAsP": {}},
+                                {"bgpRsPeerToProfile": {
+                                    "attributes": {
+                                        "tDn": "uni/tn-t1/prof-rm1",
+                                        "direction": "export",
+                                        "status": "created,modified",
+                                    },
+                                }},
+                                {"bgpRsPeerToProfile": {
+                                    "attributes": {
+                                        "tDn": "uni/tn-t1/prof-rm2",
+                                        "direction": "import",
+                                        "status": "deleted",
+                                    },
+                                }},
+                            ]}},
                         ]}},
                     ]}},
                 ]}},
