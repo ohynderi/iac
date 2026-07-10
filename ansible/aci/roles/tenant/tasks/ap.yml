@@ -14,6 +14,6 @@
     label: "{{ [ tenant.name, ap.name ] | join('/') }}"
 
   when:
-    - ap.state is defined
+    - ap | has_nested_state(include_keys=['tags'])
 
   no_log: true

@@ -9,6 +9,6 @@
     tenant_name: "{{ tenant_name_prefix ~ tenant.name ~ tenant_name_suffix }}"
 
   when:
-    - tenant.state is defined
+    - tenant | has_nested_state(include_keys=['tags'])
 
   no_log: true

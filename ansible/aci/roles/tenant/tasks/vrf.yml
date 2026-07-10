@@ -14,7 +14,7 @@
     label: "{{ [ tenant.name, vrf.name ] | join('/') }}"
 
   when:
-    - vrf.state is defined
+    - vrf | has_nested_state
 
   no_log: true
 

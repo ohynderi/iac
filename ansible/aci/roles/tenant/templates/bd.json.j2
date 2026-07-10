@@ -2,24 +2,21 @@
   "fvBD": {
     "attributes": {
       "name": "{{ bd_name }}",
-      "status": "{{ 'deleted' if bd.state == 'absent' else 'created,modified' }}"
-      {% if bd.state == 'present' %}
+      "status": "{{ 'deleted' if bd.state is defined and bd.state == 'absent' else 'created,modified' }}"
+      {% if bd.state | default('present') != 'absent' %}
       ,
-      "descr": "{{ bd.description | default('') }}",
+      "descr": "{{ bd.description | default(bd_default_description) }}",
+      "epMoveDetectMode": "{{ bd.endpoint_move_detection | default(bd_default_endpoint_move_detection) }}",
 
-      {% if bd.unicast_routing | default(false) %}
-      "unicastRoute": "yes",
-      "unkMacUcastAct": "proxy",
-      "arpFlood": "no"
-      {% else %}
-      "unicastRoute": "no",
-      "unkMacUcastAct": "flood",
-      "arpFlood": "yes"
-      {% endif %}
+      {% set unicast_routing = bd.unicast_routing | default(false) %}
+      "unicastRoute": "{{ 'yes' if unicast_routing else 'no' }}",
+      "unkMacUcastAct": "{{ bd.l2_unknown_unicast | default(bd_default_l2_unknown_unicast_routing_enabled if unicast_routing else bd_default_l2_unknown_unicast_routing_disabled) }}",
+      "unkMcastAct": "{{ bd.l3_unknown_multicast | default(bd_default_l3_unknown_multicast_routing_enabled if unicast_routing else bd_default_l3_unknown_multicast_routing_disabled) }}",
+      "arpFlood": "{{ 'yes' if bd.arp_flood | default(bd_default_arp_flood_routing_enabled if unicast_routing else bd_default_arp_flood_routing_disabled) else 'no' }}"
 
       {% endif %}
     }
-    {% if bd.state == 'present' %}
+    {% if bd.state | default('present') != 'absent' %}
     ,
     "children": [
       {
@@ -61,7 +58,6 @@
           }
         }
       }
-      {% if not loop.last %},{% endif %}
       {% endfor %}
 
       {% for l3out in bd.l3outs | default( [] ) %}
@@ -74,9 +70,8 @@
           }
         }
       }
-      {% if not loop.last %},{% endif %}
       {% endfor %}
-      
+
     ]
     {% endif %}
   }

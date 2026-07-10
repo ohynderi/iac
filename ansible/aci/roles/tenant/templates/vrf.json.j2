@@ -2,13 +2,14 @@
   "fvCtx": {
     "attributes": {
       "name": "{{ vrf_name }}",
-      "status": "{{ 'deleted' if vrf.state == 'absent' else 'created,modified' }}"
-      {% if vrf.state == 'present' %}
+      "status": "{{ 'deleted' if vrf.state is defined and vrf.state == 'absent' else 'created,modified' }}"
+      {% if vrf.state | default('present') != 'absent' %}
       ,
-      "descr": "{{ vrf.description | default('') }}"
+      "descr": "{{ vrf.description | default(vrf_default_description) }}",
+      "pcEnfPref": "{{ vrf.enforcement | default(vrf_default_enforcement) }}"
       {% endif %}
     }
-    {% if vrf.state == 'present' %}
+    {% if vrf.state | default('present') != 'absent' %}
     ,
     "children": [
       {% for tag in vrf.tags | default( [] ) %}
@@ -24,10 +25,11 @@
       {% endfor %}
       {
         "vzAny": {
-          "attributes": {},
+          "attributes": {
+            "prefGrMemb": "{{ vrf.preferred_group | default(vrf_default_preferred_group) }}"
+          },
           "children": [
             {% for contract in vrf.contracts | default( [] ) %}
-
             {% if contract.type == 'consumer' %}
             {
               "vzRsAnyToCons": {
@@ -47,13 +49,12 @@
               }
             }
             {% endif %}
-
             {% if not loop.last %},{% endif %}
             {% endfor %}
           ]
         }
       }
-      {% if vrf.ipv4_route_targets is defined %}
+      {% if vrf.ipv4_route_targets | default( [] ) | length > 0 %}
       ,
       {
         "bgpRtTargetP": {
@@ -61,7 +62,7 @@
             "af": "ipv4-ucast"
           },
           "children": [
-            {% for rt in vrf.ipv4_route_targets | default( [] ) %}
+            {% for rt in vrf.ipv4_route_targets %}
             {
               "bgpRtTarget": {
                 "attributes": {
@@ -77,17 +78,15 @@
         }
       }
       {% endif %}
-
-      {% if vrf.ipv4_route_targets is defined and vrf.ipv6_route_targets is defined %},{% endif %}
-
-      {% if vrf.ipv6_route_targets is defined %}
+      {% if vrf.ipv6_route_targets | default( [] ) | length > 0 %}
+      ,
       {
         "bgpRtTargetP": {
           "attributes": {
             "af": "ipv6-ucast"
           },
           "children": [
-            {% for rt in vrf.ipv6_route_targets | default( [] ) %}
+            {% for rt in vrf.ipv6_route_targets %}
             {
               "bgpRtTarget": {
                 "attributes": {
@@ -101,7 +100,7 @@
             {% endfor %}
           ]
         }
-      },
+      }
       {% endif %}
     ]
     {% endif %}

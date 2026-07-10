@@ -32,14 +32,78 @@ Each role/task is independently toggleable via `import_<task>_task` vars in
 `<x>_name_prefix`/`<x>_name_suffix` (also in `vars/main.yml`) — useful for namespacing
 when multiple pipelines/environments share a fabric.
 
+Templates also pull fallback values for optional intent fields from `vars/main.yml`
+instead of hardcoding them, mostly as `<x>_default_<field>` (e.g.
+`epg_default_description`, `epg_default_preferred_group_member`,
+`subject_default_action`). Two families of fields deviate from that naming pattern:
+
+- The EPG domain-attachment/interface immediacy fields: `domain.resolution` /
+  `domain.deployment` fall back to `domain_immediacy` / `domain_deployment`, and an
+  interface's `deployment` field falls back to `interface_deployment`.
+- The BD L2/L3 unknown-traffic and ARP-flood fields (`l2_unknown_unicast`,
+  `l3_unknown_multicast`, `arp_flood`) don't have a single static default — each falls
+  back to one of two `bd_default_<field>_routing_enabled` /
+  `bd_default_<field>_routing_disabled` vars depending on whether `bd.unicast_routing`
+  is set, preserving the coupling `bd.json.j2` originally had baked in before those
+  fields were split out into independently overridable ones.
+
+All of the above live in `roles/tenant/vars/main.yml`.
+
 ## The `state: present|absent` convention
 
-Every object in the schema carries an optional `state`. A task only fires for an item
-when `state` is *defined* at all (`when: <item>.state is defined`) — omit `state`
-entirely to leave an object untouched. The Jinja templates then map:
+Every object in the schema carries an optional `state`, and it can be set not just on
+the object itself but on any of its children (a tag, a domain, a route-map, ...). The
+Jinja templates map it as:
 
-- `state: present` → APIC `status: created,modified` (and render the full body/children)
+- `state: present` (or unset, defaulting to present) → APIC `status: created,modified`
+  (and render the full body/children)
 - `state: absent` → APIC `status: deleted` (skip the body — a bare delete)
+
+**Task gating.** Most tasks still fire only when the item's own `state` is *defined*
+(`when: <item>.state is defined`) — omit `state` entirely to leave an object untouched.
+`epg.yml`, `ap.yml`, `tenant.yml`, and `bd.yml` have been migrated to the
+`has_nested_state` filter (see below), which fires when `state` is defined *anywhere* in
+the item's dict/list tree, not just at the root — needed because a single task/template
+call renders the whole object (e.g. EPG + tags + domains + interfaces + contracts) in
+one POST, so a change nested several levels down (e.g. `tags[1].state: absent`) would
+otherwise never reach the template unless the object's own `state` also happened to be
+set.
+
+Because of this, any Jinja template whose task might run with its *own* `state` unset
+must not compare it directly (`{% if epg.state == 'present' %}` raises "has no attribute
+'state'" under Ansible's strict undefined). Guard it with `default('present')`
+(`{% if epg.state | default('present') != 'absent' %}`), as `epg.json.j2` now does.
+
+## Filter plugin: `has_nested_state` (`plugins/state_helpers.py`)
+
+Loaded via `ansible.cfg` (`filter_plugins = ./plugins`, adjacent to `iac.yml` — Ansible
+only auto-discovers a directory literally named `filter_plugins`, so a plain `plugins/`
+folder needs this one line of config to be picked up).
+
+`has_nested_state(data)` recursively walks a dict/list and returns `True` if a `state`
+key exists anywhere in it. Used as the task gate instead of `<item>.state is defined`
+when a single task/template renders an item's entire subtree, so a `state` set only on
+a nested child still triggers the task:
+
+```yaml
+when:
+  - epg | has_nested_state
+```
+
+It also accepts `include_keys` / `exclude_keys` (mutually exclusive) to restrict the
+search to specific top-level branches of the item — useful when more than one task
+renders different slices of the same looped item (e.g. `l3out.yml` has one task for
+node/interface profiles and another for `external_epgs`, both looping over the same
+`tenant.l3outs`; without scoping, a `state` change in either branch would re-trigger
+both tasks):
+
+```yaml
+when:
+  - l3out | has_nested_state(exclude_keys=['external_epgs'])   # node/interface-profile task
+  - l3out | has_nested_state(include_keys=['external_epgs'])   # external-EPG task
+```
+
+The item's own root-level `state` key is always honored regardless of these filters.
 
 ## The wrapper task (`wrapper_api_call.yml`)
 
@@ -63,7 +127,9 @@ shared "common" role) — see review notes below for a drift between the copies.
 
 ```
 iac.yml                        # entry playbook (hosts: apic)
+ansible.cfg                    # points filter_plugins at ./plugins
 schema.json                    # JSON Schema (draft-07) for the merged intent
+plugins/state_helpers.py       # has_nested_state filter (see below)
 roles/
   fabric/tasks/                # leaf_prof, leaf_intf_prof, intf_pol, vlan_pool, domain, aaep, ipg
   fabric/templates/*.json.j2   # one template per fabric object type
@@ -114,6 +180,20 @@ ansible-playbook -i <inventory> iac.yml
 Set `aci_cfg_directory`, `enable_fabric_role`, `enable_node_role`, `enable_tenant_role`
 via `-e` to override the defaults in `iac.yml`.
 
+## Testing
+
+Template unit tests live under `tests/` and render `roles/tenant/templates/*.j2`
+directly with Jinja2 (no Ansible/APIC required), asserting on the parsed JSON output.
+The `render` fixture in `tests/conftest.py` auto-loads `roles/tenant/vars/main.yml`
+(the `*_default_*` values) as base template context, so tests only need to pass the
+`ap`/`epg`/etc. intent dict being tested.
+
+Run with [`uv`](https://docs.astral.sh/uv/) — no project-wide install required:
+
+```bash
+uv run --with pytest --with jinja2 --with pyyaml pytest tests/ -v
+```
+
 ## Review notes
 
 A few things worth cleaning up or confirming before relying on this further:
@@ -155,3 +235,14 @@ A few things worth cleaning up or confirming before relying on this further:
 7. There's a sibling project, `ansible/aci_async/`, that looks like an async variant of
    this same automation (same role names) — not covered by this doc; worth checking
    whether it's meant to replace this one or is a separate experiment.
+8. **`has_nested_state` rollout is only partial.** `epg.yml`, `ap.yml`, `tenant.yml`,
+   `bd.yml`, and `vrf.yml` have been switched from `<item>.state is defined` to the
+   nested-tree check so far. `epg.yml`, `bd.yml`, and `vrf.yml` use it unrestricted,
+   since every nested array in `epg`/`bd`/`vrf` is something their own template renders;
+   `ap.yml` and `tenant.yml` are scoped to `include_keys=['tags']` because `ap` nests
+   `epgs` (handled by a separate task) and `tenant` nests virtually everything else, so
+   unrestricted `has_nested_state` there would fire on unrelated nested changes.
+   `contract.json.j2`, `filter.json.j2`, and `l3out.json.j2` still have the bare
+   `{% if <item>.state == 'present' %}` pattern `epg.json.j2` originally had — each will
+   need the same `default('present')` guard before its task's gate can safely be switched
+   to `has_nested_state`.

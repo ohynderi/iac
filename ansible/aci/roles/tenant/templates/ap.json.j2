@@ -2,13 +2,10 @@
   "fvAp": {
     "attributes": {
       "name": "{{ ap_name }}",
-      "status": "{{ 'deleted' if ap.state == 'absent' else 'created,modified' }}"
-      {% if ap.state == 'present' %}
-      ,
-      "descr": "{{ ap.description | default('') }}"
-      {% endif %}
+      "status": "{{ 'deleted' if ap.state is defined and ap.state == 'absent' else 'created,modified' }}",
+      "descr": "{{ ap.description | default(ap_default_description) }}"
     }
-    {% if ap.state == 'present' and ap.tags is defined and ap.tags | length > 0 %}
+    {% if ap.state | default('present') != 'absent' and ap.tags is defined and ap.tags | length > 0 %}
     ,
     "children": [
       {% for tag in ap.tags %}

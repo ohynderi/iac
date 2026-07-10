@@ -310,6 +310,8 @@
         "name": { "type": "string" },
         "description": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
+        "enforcement": { "type": "string", "enum": ["enforced", "unenforced"] },
+        "preferred_group": { "type": "string", "enum": ["enabled", "disabled"] },
         "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
         "contracts": { "type": "array", "items": { "$ref": "#/$defs/vrf_contract" } },
         "ipv4_route_targets": { "type": "array", "items": { "$ref": "#/$defs/route_target" } },
@@ -349,6 +351,10 @@
         "description": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
         "unicast_routing": { "type": "boolean" },
+        "endpoint_move_detection": { "type": "string", "enum": ["", "garp"] },
+        "l2_unknown_unicast": { "type": "string", "enum": ["proxy", "flood"] },
+        "l3_unknown_multicast": { "type": "string", "enum": ["opt-flood", "flood"] },
+        "arp_flood": { "type": "boolean" },
         "subnets": { "type": "array", "items": { "$ref": "#/$defs/subnet" } },
         "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
         "l3outs": { "type": "array", "items": { "$ref": "#/$defs/bd_l3out" } }
@@ -521,6 +527,8 @@
       "properties": {
         "name": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
         "epgs": { "type": "array", "items": { "$ref": "#/$defs/epg" } }
       },
       "required": ["name"]
@@ -532,7 +540,9 @@
       "properties": {
         "name": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
+        "description": { "type": "string" },
         "bd": { "type": "string" },
+        "preferred_group_member": { "type": "string", "enum": ["include", "exclude"] },
         "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
         "domains": { "type": "array", "items": { "$ref": "#/$defs/domain" } },
         "interfaces": { "type": "array", "items": { "$ref": "#/$defs/interface" } },
@@ -547,6 +557,8 @@
       "properties": {
         "name": { "type": "string" },
         "type": { "type": "string", "enum": ["physical", "virtual"] },
+        "resolution": { "type": "string", "enum": ["immediate", "lazy", "pre-provision"] },
+        "deployment": { "type": "string", "enum": ["immediate", "lazy"] },
         "state": { "$ref": "#/$defs/state" }
       },
       "required": ["name", "type"]
@@ -563,6 +575,7 @@
         "peer_leaf_id": { "type": "integer" },
         "mode": { "type": "string", "enum": ["regular", "untagged"] },
         "vlan": { "type": "integer" },
+        "deployment": { "type": "string", "enum": ["immediate", "lazy"] },
         "state": { "$ref": "#/$defs/state" }
       },
       "required": ["leaf_id", "pod", "mode", "vlan"]

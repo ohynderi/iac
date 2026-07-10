@@ -2,13 +2,10 @@
   "fvTenant": {
     "attributes": {
       "name": "{{ tenant_name }}",
-      "status": "{{ 'deleted' if tenant.state == 'absent' else 'created,modified' }}"
-      {% if tenant.state == 'present' %}
-      ,
-      "descr": "{{ tenant.description | default('') }}"
-      {% endif %}
+      "status": "{{ 'deleted' if tenant.state is defined and tenant.state == 'absent' else 'created,modified' }}",
+      "descr": "{{ tenant.description | default(tenant_default_description) }}"
     }
-    {% if tenant.state == 'present' %}
+    {% if tenant.state | default('present') != 'absent' %}
     ,
     "children": [
       {% for tag in tenant.tags | default( [] ) %}

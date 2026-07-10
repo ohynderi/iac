@@ -17,7 +17,7 @@
     label: "{{ [ tenant.name, ap.name, epg.name ] | join('/') }}"
 
   when:
-    - epg.state is defined
+    - epg | has_nested_state
     - ( ap.state is defined and ap.state != 'absent' ) or ap.state is not defined
 
-  no_log: true
+  no_log: false

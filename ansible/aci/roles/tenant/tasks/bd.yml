@@ -14,7 +14,7 @@
     label: "{{ [ tenant.name, bd.name ] | join('/') }}"
 
   when:
-    - bd.state is defined
+    - bd | has_nested_state
 
   no_log: true
 

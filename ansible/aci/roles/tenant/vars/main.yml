@@ -12,6 +12,7 @@ import_route_map_task: true
 
 tenant_name_prefix: ''
 tenant_name_suffix: ''
+tenant_default_description: ''
 
 filter_name_prefix: ''
 filter_name_suffix: ''
@@ -29,15 +30,32 @@ subject_default_reverse_filter_port: 'yes'
 
 vrf_name_prefix: ''
 vrf_name_suffix: ''
+vrf_default_description: ''
+vrf_default_enforcement: 'enforced'
+vrf_default_preferred_group: 'disabled'
 
 ap_name_prefix: ''
 ap_name_suffix: ''
+ap_default_description: ''
 
 bd_name_prefix: ''
 bd_name_suffix: ''
+bd_default_description: ''
+bd_default_endpoint_move_detection: ''
+bd_default_l2_unknown_unicast_routing_enabled: 'proxy'
+bd_default_l2_unknown_unicast_routing_disabled: 'flood'
+bd_default_l3_unknown_multicast_routing_enabled: 'opt-flood'
+bd_default_l3_unknown_multicast_routing_disabled: 'flood'
+bd_default_arp_flood_routing_enabled: false
+bd_default_arp_flood_routing_disabled: true
 
 epg_name_prefix: ''
 epg_name_suffix: ''
+epg_default_description: ''
+epg_default_preferred_group_member: 'exclude'
+domain_immediacy: 'pre-provision'
+domain_deployment: 'immediate'
+interface_deployment: 'immediate'
 
 l3out_name_prefix: ''
 l3out_name_suffix: ''
