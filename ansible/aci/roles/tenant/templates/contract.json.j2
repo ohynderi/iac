@@ -2,13 +2,14 @@
   "vzBrCP": {
     "attributes": {
       "name": "{{ contract_name }}",
-      "status": "{{ 'deleted' if contract.state == 'absent' else 'created,modified' }}"
-      {% if contract.state == 'present' %}
+      "status": "{{ 'deleted' if contract.state is defined and contract.state == 'absent' else 'created,modified' }}"
+      {% if contract.state | default('present') != 'absent' %}
       ,
-      "descr": "{{ contract.description | default('') }}"
+      "descr": "{{ contract.description | default(contract_default_description) }}",
+      "scope": "{{ contract.scope | default(contract_default_scope) }}"
       {% endif %}
     }
-    {% if contract.state == 'present' %}
+    {% if contract.state | default('present') != 'absent' %}
     ,
     "children": [
       {% for tag in contract.tags | default( [] ) %}
@@ -34,12 +35,17 @@
             "status": "{{ 'deleted' if subject.state is defined and subject.state == 'absent' else 'created,modified' }}"
             {% if subject.state|default( 'present') != 'absent' %}
             ,
-            "descr": "{{ subject.name | default('') }}",
+            "descr": "{{ subject.description | default(subject_default_description) }}",
             "revFltPorts": "{{ subject.reverse_filter_port | default( subject_default_reverse_filter_port ) }}"
             {% endif %}
           },
           "children": [
             {% for filter in subject.filters | default( [] ) %}
+            {% set filter_log = filter.log | default(subject_default_log) %}
+            {% set filter_policy_compression = filter.policy_compression | default(subject_default_policy_compression) %}
+            {% set filter_directive_parts = [] %}
+            {% if filter_log %}{% set _ = filter_directive_parts.append('log') %}{% endif %}
+            {% if filter_policy_compression %}{% set _ = filter_directive_parts.append('no_stats') %}{% endif %}
             {
               "vzRsSubjFiltAtt": {
                 "attributes": {
@@ -47,7 +53,8 @@
                   "status": "{{ 'deleted' if filter.state is defined and filter.state == 'absent' else 'created,modified' }}"
                   {% if filter.state|default( 'present') != 'absent' %}
                   ,
-                  "action": "{{ filter.action | default( subject_default_action )}}"
+                  "action": "{{ filter.action | default( subject_default_action )}}",
+                  "directives": "{{ filter_directive_parts | join(',') }}"
                   {% endif %}
                 }
               }

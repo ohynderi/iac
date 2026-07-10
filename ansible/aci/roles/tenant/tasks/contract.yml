@@ -14,7 +14,7 @@
     label: "{{ [ tenant.name, contract.name ] | join('/') }}"
 
   when:
-    - contract.state is defined
+    - contract | has_nested_state
   
   no_log: true
 

@@ -16,17 +16,28 @@ tenant_default_description: ''
 
 filter_name_prefix: ''
 filter_name_suffix: ''
+filter_default_description: ''
 
 entry_name_prefix: ''
 entry_name_suffix: ''
+entry_default_description: ''
+entry_default_ethertype: 'unspecified'
+entry_default_ip_protocol: 'unspecified'
+entry_default_from_port: 'unspecified'
+entry_default_to_port: 'unspecified'
 
 contract_name_prefix: ''
 contract_name_suffix: ''
+contract_default_description: ''
+contract_default_scope: 'context'
 
 subject_name_prefix: ''
 subject_name_suffix: ''
+subject_default_description: ''
 subject_default_action: 'permit'
 subject_default_reverse_filter_port: 'yes'
+subject_default_log: false
+subject_default_policy_compression: false
 
 vrf_name_prefix: ''
 vrf_name_suffix: ''
@@ -59,3 +70,22 @@ interface_deployment: 'immediate'
 
 l3out_name_prefix: ''
 l3out_name_suffix: ''
+l3out_default_description: ''
+l3out_default_import_route_control: true
+l3out_default_export_route_control: false
+
+ospf_default_area_type: 'regular'
+ospf_default_area_cost: '1'
+
+router_default_loopback: false
+
+l3_interface_default_mtu: 'inherit'
+
+external_epg_default_description: ''
+
+bgp_peer_default_description: ''
+bgp_peer_default_bfd: false
+bgp_peer_default_ttl: 1
+bgp_peer_default_weight: 0
+bgp_peer_default_send_community: false
+bgp_peer_default_send_extended_community: false

@@ -1,6 +1,6 @@
 {% set ctrl_list = [] %}
-{% if peer.send_community | default(false) %}{% set _ = ctrl_list.append('send-com') %}{% endif %}
-{% if peer.send_extended_community | default(false) %}{% set _ = ctrl_list.append('send-ext-com') %}{% endif %}
+{% if peer.send_community | default(bgp_peer_default_send_community) %}{% set _ = ctrl_list.append('send-com') %}{% endif %}
+{% if peer.send_extended_community | default(bgp_peer_default_send_extended_community) %}{% set _ = ctrl_list.append('send-ext-com') %}{% endif %}
 {% set has_local_asn = peer.local_asn is defined %}
 {% set has_route_maps = peer.route_maps | default( [] ) | length > 0 %}
 {
@@ -11,10 +11,10 @@
             "adminSt": "enabled",
             "connectivityType": "tenant",
             "ctrl": "{{ ctrl_list | join(',') }}",
-            "descr": "{{ peer.description | default('') }}",
-            "peerCtrl": "{{ 'bfd' if peer.bfd | default(false) else '' }}",
-            "ttl": "{{ peer.ttl | default(1) }}",
-            "weight": "{{ peer.weight | default(0) }}",
+            "descr": "{{ peer.description | default(bgp_peer_default_description) }}",
+            "peerCtrl": "{{ 'bfd' if peer.bfd | default(bgp_peer_default_bfd) else '' }}",
+            "ttl": "{{ peer.ttl | default(bgp_peer_default_ttl) }}",
+            "weight": "{{ peer.weight | default(bgp_peer_default_weight) }}",
             "status": "{{ 'deleted' if peer.state is defined and peer.state == 'absent' else 'created,modified' }}"
         },
         "children": [

@@ -2,13 +2,13 @@
   "vzFilter": {
     "attributes": {
       "name": "{{ filter_name }}",
-      "status": "{{ 'deleted' if filter.state == 'absent' else 'created,modified' }}"
-      {% if filter.state == 'present' %}
+      "status": "{{ 'deleted' if filter.state is defined and filter.state == 'absent' else 'created,modified' }}"
+      {% if filter.state | default('present') != 'absent' %}
       ,
-      "descr": "{{ filter.description | default('') }}"
+      "descr": "{{ filter.description | default(filter_default_description) }}"
       {% endif %}
     }
-    {% if filter.state == 'present' %}
+    {% if filter.state | default('present') != 'absent' %}
     ,
     "children": [
       {% for tag in filter.tags | default( [] ) %}
@@ -34,11 +34,11 @@
             "status": "{{ 'deleted' if entry.state is defined and entry.state == 'absent' else 'created,modified' }}"
             {% if entry.state|default('present') != 'absent' %}
             ,
-            "descr": "{{ entry.name | default('') }}",
-            "etherT": "{{ entry.ethertype | default('unspecified') }}",
-            "prot": "{{ entry.ip_protocol | default('unspecified') }}",
-            "dFromPort": "{{ entry.from_port | default('unspecified') }}",
-            "dToPort": "{{ entry.to_port | default('unspecified') }}"
+            "descr": "{{ entry.description | default(entry_default_description) }}",
+            "etherT": "{{ entry.ethertype | default(entry_default_ethertype) }}",
+            "prot": "{{ entry.ip_protocol | default(entry_default_ip_protocol) }}",
+            "dFromPort": "{{ entry.from_port | default(entry_default_from_port) }}",
+            "dToPort": "{{ entry.to_port | default(entry_default_to_port) }}"
             {% endif %}
           }
         }

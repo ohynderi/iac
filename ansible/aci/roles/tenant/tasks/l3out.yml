@@ -15,7 +15,7 @@
     label: "{{ [ tenant.name, l3out.name ] | join('/') }}"
 
   when:
-    - l3out.state is defined
+    - l3out | has_nested_state(exclude_keys=['external_epgs'])
 
   no_log: true
 
@@ -35,6 +35,6 @@
     label: "{{ [ tenant.name, l3out.name ] | join('/') }}"
 
   when:
-    - l3out.state is defined
+    - l3out | has_nested_state(include_keys=['external_epgs'])
 
   no_log: true

@@ -2,27 +2,30 @@
   "l3extOut": {
     "attributes": {
       "name": "{{ l3out_name }}",
-      "status": "{{ 'deleted' if l3out.state == 'absent' else 'created,modified' }}"
-      {% if l3out.state == 'present' %}
+      "status": "{{ 'deleted' if l3out.state is defined and l3out.state == 'absent' else 'created,modified' }}"
+      {% if l3out.state | default('present') != 'absent' %}
       ,
-      "descr": "{{ l3out.description | default('') }}",
-      "enforceRtctrl": "{{ l3out.route_control | default( ['export'] ) | join(',') }}"
+      "descr": "{{ l3out.description | default(l3out_default_description) }}",
+      "enforceRtctrl": "{{ [
+            'import' if l3out.import_route_control | default(l3out_default_import_route_control) else None,
+            'export' if l3out.export_route_control | default(l3out_default_export_route_control) else None
+        ] | select | join(',') }}"
       {% endif %}
     }
-    {% if l3out.state == 'present' %}
+    {% if l3out.state | default('present') != 'absent' %}
     ,
     "children": [
       {
         "l3extRsL3DomAtt":{
           "attributes":{
-            "tDn":"uni/l3dom-{{ l3out.domain | default('') }}"
+            "tDn":"uni/l3dom-{{ l3out.domain }}"
           }
         }
       },
       {
         "l3extRsEctx":{
           "attributes":{
-            "tnFvCtxName":"{{ l3out.vrf | default('') }}"
+            "tnFvCtxName":"{{ l3out.vrf }}"
           }
         }
       }
@@ -33,15 +36,26 @@
         "ospfExtP": {
           "attributes": {
             "areaId": "{{ l3out.protocols.ospf.area_id }}",
-            "areaType": "{{ l3out.protocols.ospf.area_type }}",
-            "areaCost": "{{ l3out.protocols.ospf.area_cost }}",
+            "areaType": "{{ l3out.protocols.ospf.area_type | default(ospf_default_area_type) }}",
+            "areaCost": "{{ l3out.protocols.ospf.area_cost | default(ospf_default_area_cost) }}",
             "status": "{{ 'deleted' if l3out.protocols.ospf.state is defined and l3out.protocols.ospf.state == 'absent' else 'created,modified' }}"
           }
         }
       }
       {% endif %}
 
-      {% if l3out.tag|default([])| length > 0 %},{% endif %}
+      {% if l3out.protocols is defined and l3out.protocols.bgp is defined %}
+      ,
+      {
+        "bgpExtP": {
+          "attributes": {
+            "status": "{{ 'deleted' if l3out.protocols.bgp.state is defined and l3out.protocols.bgp.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% endif %}
+
+      {% if l3out.tags|default([])| length > 0 %},{% endif %}
       {% for tag in l3out.tags | default( [] ) %}
       {
         "tagAnnotation": {
@@ -70,7 +84,7 @@
                 "attributes": {
                   "tDn": "topology/pod-{{ router.pod }}/node-{{ router.leaf_id }}",
                   "rtrId": "{{ router.router_id }}",
-                  "rtrIdLoopBack": "{{ 'yes' if router.loopback else 'no' }}",
+                  "rtrIdLoopBack": "{{ 'yes' if router.loopback | default(router_default_loopback) else 'no' }}",
                   "status": "{{ 'deleted' if router.state is defined and router.state == 'absent' else 'created,modified' }}"
                 },
                 "children": [
@@ -104,6 +118,11 @@
             {% if nprof.routers|default([])|length > 0 and nprof.interface_profiles|default([])|length > 0 %},{% endif %}
 
             {% for iprof in nprof.interface_profiles | default( [] ) %}
+            {% set intf_buckets = iprof.interfaces | default({}) %}
+            {% set typed_intfs = [] %}
+            {% for intf in intf_buckets.svi | default( [] ) %}{% set _ = typed_intfs.append((intf, 'ext-svi')) %}{% endfor %}
+            {% for intf in intf_buckets['sub-interface'] | default( [] ) %}{% set _ = typed_intfs.append((intf, 'sub-interface')) %}{% endfor %}
+            {% for intf in intf_buckets['l3-port'] | default( [] ) %}{% set _ = typed_intfs.append((intf, 'l3-port')) %}{% endfor %}
             {
               "l3extLIfP": {
                 "attributes": {
@@ -111,19 +130,22 @@
                   "status": "{{ 'deleted' if iprof.state is defined and iprof.state == 'absent' else 'created,modified' }}"
                 },
                 "children": [
-                  {% for intf in iprof.interfaces | default( [] ) %}
+                  {% for intf, intf_type in typed_intfs %}
                   {
                     "l3extRsPathL3OutAtt": {
                       "attributes": {
                         "addr": "{{ intf.addr if intf.peer_leaf_id is not defined else '0.0.0.0' }}",
-                        {% if intf.type | lower != 'l3-port' %}
+                        {% if intf_type != 'l3-port' %}
                         "encap": "vlan-{{ intf.vlan }}",
                         {% endif %}
+                        {% if intf_type == 'ext-svi' %}
                         "mode": "{{ intf.mode }}",
-                        "ifInstT": "{{ intf.type }}",
+                        {% endif %}
+                        "ifInstT": "{{ intf_type }}",
+                        "mtu": "{{ intf.mtu | default(l3_interface_default_mtu) }}",
 
                         {% if intf.port is defined %}
-                        "tDn": "topology/pod-{{ intf.pod }}/paths-{{ intf.leaf_id }}/pathep-[{{ intf.port }}]",
+                        "tDn": "topology/pod-{{ intf.pod }}/paths-{{ intf.leaf_id }}/pathep-[{{ intf.port | lower }}]",
                         {% elif intf.peer_leaf_id is not defined and intf.ipg is defined %}
                         "tDn": "topology/pod-{{ intf.pod }}/paths-{{ intf.leaf_id }}/pathep-[{{ intf.ipg }}]",
                         {% else %}
@@ -141,7 +163,7 @@
                             "attributes":{
                               "addr": "{{ intf.addr }}",
                               "side": "A"
-                            },
+                            }
                           }
                         },
                         {
@@ -149,7 +171,7 @@
                             "attributes":{
                               "addr": "{{ intf.peer_addr }}",
                               "side": "B"
-                            },
+                            }
                           }
                         }
                         {% endif %}

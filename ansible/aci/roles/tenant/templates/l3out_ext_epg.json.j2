@@ -9,7 +9,7 @@
         "l3extInstP":{
           "attributes":{
             "name": "{{ epg.name }}",
-            "descr": "{{ epg.description | default('') }}",
+            "descr": "{{ epg.description | default(external_epg_default_description) }}",
             "status": "{{ 'deleted' if epg.state is defined and epg.state == 'absent' else 'created,modified' }}"
           },
           "children": [

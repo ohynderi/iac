@@ -389,6 +389,9 @@
       "properties": {
         "name": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
+        "description": { "type": "string" },
+        "scope": { "type": "string", "enum": ["context", "tenant", "global"] },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
         "subjects": { "type": "array", "items": { "$ref": "#/$defs/subject" } }
       },
       "required": ["name"]
@@ -399,6 +402,7 @@
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
         "description": { "type": "string" },
         "reverse_filter_port": { "type": "string" },
         "filters": { "type": "array", "items": { "$ref": "#/$defs/subject_filter" } }
@@ -411,7 +415,10 @@
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string" },
-        "action": { "type": "string" }
+        "state": { "$ref": "#/$defs/state" },
+        "action": { "type": "string" },
+        "log": { "type": "boolean" },
+        "policy_compression": { "type": "boolean" }
       },
       "required": ["name", "action"]
     },
@@ -422,6 +429,8 @@
       "properties": {
         "name": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
         "entries": { "type": "array", "items": { "$ref": "#/$defs/filter_entry" } }
       },
       "required": ["name"]
@@ -432,13 +441,35 @@
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string" },
-        "ethertype": { "type": "string" },
-        "ip_protocol": { "type": "string" },
-        "from_port": { "type": "integer" },
-        "to_port": { "type": "integer" },
-        "state": { "$ref": "#/$defs/state" }
+        "description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "ethertype": {
+          "type": "string",
+          "enum": ["unspecified", "arp", "fcoe", "ip", "ipv4", "ipv6", "mac_security", "mpls_ucast", "trill"]
+        },
+        "ip_protocol": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": ["unspecified", "icmp", "icmpv6", "igmp", "tcp", "udp", "eigrp", "egp", "igp", "ospfigp", "pim", "l2tp"]
+            },
+            { "type": "string", "pattern": "^[0-9]+$" }
+          ]
+        },
+        "from_port": {
+          "anyOf": [
+            { "type": "integer", "minimum": 0, "maximum": 65535 },
+            { "type": "string", "enum": ["unspecified", "dns", "ftpData", "http", "https", "pop3", "rtsp", "smtp"] }
+          ]
+        },
+        "to_port": {
+          "anyOf": [
+            { "type": "integer", "minimum": 0, "maximum": 65535 },
+            { "type": "string", "enum": ["unspecified", "dns", "ftpData", "http", "https", "pop3", "rtsp", "smtp"] }
+          ]
+        }
       },
-      "required": ["name", "ethertype", "ip_protocol", "from_port", "to_port"]
+      "required": ["name"]
     },
 
     "match_rule": {
@@ -589,12 +620,51 @@
         "state": { "$ref": "#/$defs/state" },
         "vrf": { "type": "string" },
         "domain": { "type": "string" },
-        "route_control": { "type": "array", "items": { "type": "string" } },
-        "protocols": { "type": "object" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "import_route_control": { "type": "boolean" },
+        "export_route_control": { "type": "boolean" },
+        "protocols": { "$ref": "#/$defs/l3out_protocols" },
         "external_epgs": { "type": "array", "items": { "$ref": "#/$defs/external_epg" } },
         "node_profiles": { "type": "array", "items": { "$ref": "#/$defs/node_profile" } }
       },
       "required": ["name", "vrf", "domain"]
+    },
+
+    "l3out_protocols": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ospf": { "$ref": "#/$defs/ospf_policy" },
+        "bgp": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/bgp_policy" }] }
+      }
+    },
+
+    "bgp_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "state": { "$ref": "#/$defs/state" }
+      }
+    },
+
+    "ospf_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "area_id": {
+          "type": "string",
+          "anyOf": [
+            { "const": "backbone" },
+            { "pattern": "^([0-9]{1,3}\\.){3}[0-9]{1,3}$" },
+            { "pattern": "^[0-9]+$" }
+          ]
+        },
+        "area_type": { "type": "string", "enum": ["regular", "stub", "nssa"] },
+        "area_cost": { "type": "integer" },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["area_id"]
     },
 
     "external_epg": {
@@ -602,6 +672,8 @@
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "description": { "type": "string" },
         "subnets": { "type": "array", "items": { "$ref": "#/$defs/external_subnet" } }
       },
       "required": ["name"]
@@ -612,7 +684,9 @@
       "additionalProperties": false,
       "properties": {
         "ip": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
         "agg_export": { "type": "boolean" },
+        "agg_inport": { "type": "boolean" },
         "agg_shared": { "type": "boolean" },
         "export_route_ctrl": { "type": "boolean" },
         "external_epg": { "type": "boolean" },
@@ -664,9 +738,19 @@
       "properties": {
         "name": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
-        "interfaces": { "type": "array", "items": { "$ref": "#/$defs/l3_interface" } }
+        "interfaces": { "$ref": "#/$defs/l3_interfaces_by_type" }
       },
       "required": ["name"]
+    },
+
+    "l3_interfaces_by_type": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "svi": { "type": "array", "items": { "allOf": [{ "$ref": "#/$defs/l3_interface" }, { "required": ["vlan", "mode"] }] } },
+        "sub-interface": { "type": "array", "items": { "allOf": [{ "$ref": "#/$defs/l3_interface" }, { "required": ["vlan"] }] } },
+        "l3-port": { "type": "array", "items": { "$ref": "#/$defs/l3_interface" } }
+      }
     },
 
     "l3_interface": {
@@ -678,16 +762,20 @@
         "port": { "type": "string" },
         "ipg": { "type": "string" },
         "peer_leaf_id": { "type": "integer" },
-        "type": { "type": "string", "enum": ["l3-port", "sub-interface", "ext-svi"] },
         "mode": { "type": "string", "enum": ["regular", "untagged", "native"] },
         "vlan": { "type": "integer" },
         "addr": { "type": "string" },
         "peer_addr": { "type": "string" },
-        "mtu": { "type": "integer" },
+        "mtu": {
+          "anyOf": [
+            { "type": "string", "const": "inherit" },
+            { "type": "integer", "minimum": 576, "maximum": 9216 }
+          ]
+        },
         "state": { "$ref": "#/$defs/state" },
         "connectivity_profiles": { "type": "array", "items": { "$ref": "#/$defs/bgp_connectivity_profile" } }
       },
-      "required": ["pod", "leaf_id", "type", "mode", "vlan", "addr"]
+      "required": ["pod", "leaf_id", "addr"]
     },
 
     "bgp_connectivity_profile": {

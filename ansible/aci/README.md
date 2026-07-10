@@ -235,14 +235,19 @@ A few things worth cleaning up or confirming before relying on this further:
 7. There's a sibling project, `ansible/aci_async/`, that looks like an async variant of
    this same automation (same role names) — not covered by this doc; worth checking
    whether it's meant to replace this one or is a separate experiment.
-8. **`has_nested_state` rollout is only partial.** `epg.yml`, `ap.yml`, `tenant.yml`,
-   `bd.yml`, and `vrf.yml` have been switched from `<item>.state is defined` to the
-   nested-tree check so far. `epg.yml`, `bd.yml`, and `vrf.yml` use it unrestricted,
-   since every nested array in `epg`/`bd`/`vrf` is something their own template renders;
-   `ap.yml` and `tenant.yml` are scoped to `include_keys=['tags']` because `ap` nests
-   `epgs` (handled by a separate task) and `tenant` nests virtually everything else, so
-   unrestricted `has_nested_state` there would fire on unrelated nested changes.
-   `contract.json.j2`, `filter.json.j2`, and `l3out.json.j2` still have the bare
-   `{% if <item>.state == 'present' %}` pattern `epg.json.j2` originally had — each will
-   need the same `default('present')` guard before its task's gate can safely be switched
-   to `has_nested_state`.
+8. **`has_nested_state` rollout is now complete** across every tenant-role task that
+   loops over intent objects: `epg.yml`, `ap.yml`, `tenant.yml`, `bd.yml`, `vrf.yml`,
+   `contract.yml`, `filter.yml`, and `l3out.yml` have all been switched from
+   `<item>.state is defined` to the nested-tree check. `epg.yml`, `bd.yml`, `vrf.yml`,
+   `contract.yml`, and `filter.yml` use it unrestricted, since every nested array in
+   `epg`/`bd`/`vrf`/`contract` (tags, subjects, filters)/`filter` (tags, entries) is
+   something their own template renders. `ap.yml` and `tenant.yml` are scoped to
+   `include_keys=['tags']` because `ap` nests `epgs` (handled by a separate task) and
+   `tenant` nests virtually everything else, so unrestricted `has_nested_state` there
+   would fire on unrelated nested changes. `l3out.yml` is the one case with two tasks
+   sharing the same `tenant.l3outs` loop var: the node/interface-profile task uses
+   `has_nested_state(exclude_keys=['external_epgs'])` (it renders everything except
+   external EPGs) and the external-EPG task uses
+   `has_nested_state(include_keys=['external_epgs'])` (it renders only external EPGs) —
+   this is the dual-task case the `include_keys`/`exclude_keys` mutual-exclusion option
+   was originally added for.
