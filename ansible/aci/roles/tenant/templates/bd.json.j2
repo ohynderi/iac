@@ -12,7 +12,8 @@
       "unicastRoute": "{{ 'yes' if unicast_routing else 'no' }}",
       "unkMacUcastAct": "{{ bd.l2_unknown_unicast | default(bd_default_l2_unknown_unicast_routing_enabled if unicast_routing else bd_default_l2_unknown_unicast_routing_disabled) }}",
       "unkMcastAct": "{{ bd.l3_unknown_multicast | default(bd_default_l3_unknown_multicast_routing_enabled if unicast_routing else bd_default_l3_unknown_multicast_routing_disabled) }}",
-      "arpFlood": "{{ 'yes' if bd.arp_flood | default(bd_default_arp_flood_routing_enabled if unicast_routing else bd_default_arp_flood_routing_disabled) else 'no' }}"
+      "arpFlood": "{{ 'yes' if bd.arp_flood | default(bd_default_arp_flood_routing_enabled if unicast_routing else bd_default_arp_flood_routing_disabled) else 'no' }}",
+      "mcastAllow": "{{ 'yes' if bd.PIM | default(bd_default_pim) else 'no' }}"
 
       {% endif %}
     }

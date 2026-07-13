@@ -666,6 +666,90 @@ def test_ospf_and_bgp_together(render):
     })
 
 
+def test_pim_true_renders_pim_ext_p(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "PIM": True}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {
+                    "pimExtP": {
+                        "attributes": {
+                            "annotation": "",
+                            "enabledAf": "ipv4-mcast",
+                            "name": "pim",
+                            "status": "created,modified",
+                        },
+                    },
+                },
+            ],
+        },
+    })
+
+
+def test_pim_false_renders_deleted(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "PIM": False}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"pimExtP": {"attributes": {"status": "deleted"}}},
+            ],
+        },
+    })
+
+
+def test_pim_toggle_true_to_false(render):
+    # Confirms flipping the PIM flag from enabled to disabled converts
+    # pimExtP's status from created,modified to deleted, so the APIC
+    # actually removes the object instead of just seeing it omitted.
+    l3out_enabled = {"name": "l3out1", "vrf": "v", "domain": "d", "PIM": True}
+    body_enabled = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out_enabled, tenant={"name": "t1"})
+
+    assert_matches(body_enabled, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"pimExtP": {"attributes": {"status": "created,modified"}}},
+            ],
+        },
+    })
+
+    l3out_disabled = {"name": "l3out1", "vrf": "v", "domain": "d", "PIM": False}
+    body_disabled = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out_disabled, tenant={"name": "t1"})
+
+    assert_matches(body_disabled, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+                {"pimExtP": {"attributes": {"status": "deleted"}}},
+            ],
+        },
+    })
+
+
+def test_pim_omitted_when_not_defined(render):
+    l3out = {"name": "l3out1", "vrf": "v", "domain": "d"}
+    body = render("l3out.json.j2", l3out_name="l3out1", l3out=l3out, tenant={"name": "t1"})
+
+    assert_matches(body, {
+        "l3extOut": {
+            "children": [
+                {"l3extRsL3DomAtt": {}},
+                {"l3extRsEctx": {}},
+            ],
+        },
+    })
+
+
 def test_router_renders_with_defaults(render):
     l3out = {"name": "l3out1", "vrf": "v", "domain": "d", "node_profiles": [
         {"name": "np1", "routers": [{"pod": 1, "leaf_id": 101, "router_id": "1.1.1.1"}]},

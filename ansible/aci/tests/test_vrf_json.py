@@ -323,6 +323,481 @@ def test_tags_contracts_and_both_route_targets_together(render):
     })
 
 
+def test_pim_omitted_when_not_defined(render):
+    vrf = {"name": "vrf1"}
+    body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf)
+
+    assert_matches(body, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+            ],
+        },
+    })
+
+
+def test_pim_renders_with_defaults_when_empty(render):
+    vrf = {"name": "vrf1", "PIM": {}}
+    body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf)
+
+    assert_matches(body, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {
+                    "pimCtxP": {
+                        "attributes": {
+                            "mtu": "1500",
+                            "ctrl": "",
+                            "status": "created,modified",
+                        },
+                    },
+                },
+            ],
+        },
+    })
+
+
+def test_pim_mtu_and_ctrl_flags_overrides(render):
+    vrf = {
+        "name": "vrf1",
+        "PIM": {
+            "mtu": 9000,
+            "fast-convergenace": True,
+            "strict-RFC-compilant": True,
+        },
+    }
+    body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf)
+
+    assert_matches(body, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {
+                    "pimCtxP": {
+                        "attributes": {
+                            "mtu": "9000",
+                            "ctrl": "fast-conv,strict-rfc-compliant",
+                            "status": "created,modified",
+                        },
+                    },
+                },
+            ],
+        },
+    })
+
+
+def test_pim_single_ctrl_flag(render):
+    vrf = {"name": "vrf1", "PIM": {"fast-convergenace": True}}
+    body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf)
+
+    assert_matches(body, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {"pimCtxP": {"attributes": {"ctrl": "fast-conv"}}},
+            ],
+        },
+    })
+
+
+def test_pim_state_absent(render):
+    vrf = {"name": "vrf1", "PIM": {"state": "absent"}}
+    body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf)
+
+    assert_matches(body, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {"pimCtxP": {"attributes": {"status": "deleted"}}},
+            ],
+        },
+    })
+
+
+def test_pim_toggle_present_to_absent(render):
+    # Confirms flipping PIM.state from present to absent converts pimCtxP's
+    # own status to deleted (the APIC cascades that delete down to its
+    # static_rp/route_map descendants regardless of their own status).
+    tenant = {"name": "tenant1"}
+    pim_config = {
+        "mtu": 1600,
+        "static_rp": [{"ip": "5.5.5.5", "route_map": "rm1"}],
+    }
+
+    vrf_present = {"name": "vrf1", "PIM": {**pim_config, "state": "present"}}
+    body_present = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf_present, tenant=tenant)
+
+    assert_matches(body_present, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {
+                    "pimCtxP": {
+                        "attributes": {"status": "created,modified"},
+                        "children": [
+                            {
+                                "pimStaticRPPol": {
+                                    "children": [
+                                        {
+                                            "pimStaticRPEntryPol": {
+                                                "attributes": {"rpIp": "5.5.5.5", "status": "created,modified"},
+                                                "children": [
+                                                    {
+                                                        "pimRPGrpRangePol": {
+                                                            "children": [
+                                                                {
+                                                                    "rtdmcRsFilterToRtMapPol": {
+                                                                        "attributes": {
+                                                                            "status": "created,modified",
+                                                                        },
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        },
+    })
+
+    vrf_absent = {"name": "vrf1", "PIM": {**pim_config, "state": "absent"}}
+    body_absent = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf_absent, tenant=tenant)
+
+    assert_matches(body_absent, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {
+                    "pimCtxP": {
+                        "attributes": {"status": "deleted"},
+                        "children": [
+                            {
+                                "pimStaticRPPol": {
+                                    "children": [
+                                        {
+                                            "pimStaticRPEntryPol": {
+                                                "attributes": {"rpIp": "5.5.5.5", "status": "created,modified"},
+                                                "children": [
+                                                    {
+                                                        "pimRPGrpRangePol": {
+                                                            "children": [
+                                                                {
+                                                                    "rtdmcRsFilterToRtMapPol": {
+                                                                        "attributes": {
+                                                                            "status": "created,modified",
+                                                                        },
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        },
+    })
+
+
+def test_pim_static_rp_omitted_when_not_defined(render):
+    vrf = {"name": "vrf1", "PIM": {}}
+    body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf)
+
+    assert_matches(body, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {"pimCtxP": {"children": ABSENT}},
+            ],
+        },
+    })
+
+
+def test_pim_static_rp_with_route_map_as_string(render):
+    # A bare string route_map is assumed to live in the same tenant as the vrf.
+    vrf = {
+        "name": "vrf1",
+        "PIM": {
+            "static_rp": [
+                {"ip": "5.5.5.5", "route_map": "rm1"},
+            ],
+        },
+    }
+    tenant = {"name": "tenant1"}
+    body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf, tenant=tenant)
+
+    assert_matches(body, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {
+                    "pimCtxP": {
+                        "children": [
+                            {
+                                "pimStaticRPPol": {
+                                    "children": [
+                                        {
+                                            "pimStaticRPEntryPol": {
+                                                "attributes": {
+                                                    "rpIp": "5.5.5.5",
+                                                    "status": "created,modified",
+                                                },
+                                                "children": [
+                                                    {
+                                                        "pimRPGrpRangePol": {
+                                                            "children": [
+                                                                {
+                                                                    "rtdmcRsFilterToRtMapPol": {
+                                                                        "attributes": {
+                                                                            "tDn": "uni/tn-tenant1/rtmap-rm1",
+                                                                            "status": "created,modified",
+                                                                        },
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        },
+    })
+
+
+def test_pim_static_rp_with_route_map_as_dict_in_other_tenant(render):
+    # A {name, tenant} mapping lets the route_map live in a different tenant.
+    vrf = {
+        "name": "vrf1",
+        "PIM": {
+            "static_rp": [
+                {"ip": "5.5.5.5", "route_map": {"name": "rm1", "tenant": "tenant2"}},
+            ],
+        },
+    }
+    tenant = {"name": "tenant1"}
+    body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf, tenant=tenant)
+
+    assert_matches(body, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {
+                    "pimCtxP": {
+                        "children": [
+                            {
+                                "pimStaticRPPol": {
+                                    "children": [
+                                        {
+                                            "pimStaticRPEntryPol": {
+                                                "children": [
+                                                    {
+                                                        "pimRPGrpRangePol": {
+                                                            "children": [
+                                                                {
+                                                                    "rtdmcRsFilterToRtMapPol": {
+                                                                        "attributes": {
+                                                                            "tDn": "uni/tn-tenant2/rtmap-rm1",
+                                                                        },
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        },
+    })
+
+
+def test_pim_static_rp_without_route_map(render):
+    vrf = {"name": "vrf1", "PIM": {"static_rp": [{"ip": "5.5.5.5"}]}}
+    body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf)
+
+    assert_matches(body, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {
+                    "pimCtxP": {
+                        "children": [
+                            {
+                                "pimStaticRPPol": {
+                                    "children": [
+                                        {
+                                            "pimStaticRPEntryPol": {
+                                                "attributes": {"rpIp": "5.5.5.5"},
+                                                "children": ABSENT,
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        },
+    })
+
+
+def test_pim_static_rp_state_absent_deletes_route_map_relation_too(render):
+    vrf = {
+        "name": "vrf1",
+        "PIM": {
+            "static_rp": [
+                {"ip": "5.5.5.5", "route_map": "rm1", "state": "absent"},
+            ],
+        },
+    }
+    tenant = {"name": "tenant1"}
+    body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf, tenant=tenant)
+
+    assert_matches(body, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {
+                    "pimCtxP": {
+                        "children": [
+                            {
+                                "pimStaticRPPol": {
+                                    "children": [
+                                        {
+                                            "pimStaticRPEntryPol": {
+                                                "attributes": {"rpIp": "5.5.5.5", "status": "deleted"},
+                                                "children": [
+                                                    {
+                                                        "pimRPGrpRangePol": {
+                                                            "children": [
+                                                                {
+                                                                    "rtdmcRsFilterToRtMapPol": {
+                                                                        "attributes": {
+                                                                            "tDn": "uni/tn-tenant1/rtmap-rm1",
+                                                                            "status": "deleted",
+                                                                        },
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        },
+    })
+
+
+def test_pim_static_rp_multiple_entries_share_same_route_map(render):
+    vrf = {
+        "name": "vrf1",
+        "PIM": {
+            "static_rp": [
+                {"ip": "5.5.5.5", "route_map": "rm1"},
+                {"ip": "5.5.5.6", "route_map": "rm1"},
+            ],
+        },
+    }
+    tenant = {"name": "tenant1"}
+    body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf, tenant=tenant)
+
+    assert_matches(body, {
+        "fvCtx": {
+            "children": [
+                {"vzAny": {}},
+                {
+                    "pimCtxP": {
+                        "children": [
+                            {
+                                "pimStaticRPPol": {
+                                    "children": [
+                                        {
+                                            "pimStaticRPEntryPol": {
+                                                "attributes": {"rpIp": "5.5.5.5"},
+                                                "children": [
+                                                    {
+                                                        "pimRPGrpRangePol": {
+                                                            "children": [
+                                                                {
+                                                                    "rtdmcRsFilterToRtMapPol": {
+                                                                        "attributes": {
+                                                                            "tDn": "uni/tn-tenant1/rtmap-rm1",
+                                                                        },
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                        {
+                                            "pimStaticRPEntryPol": {
+                                                "attributes": {"rpIp": "5.5.5.6"},
+                                                "children": [
+                                                    {
+                                                        "pimRPGrpRangePol": {
+                                                            "children": [
+                                                                {
+                                                                    "rtdmcRsFilterToRtMapPol": {
+                                                                        "attributes": {
+                                                                            "tDn": "uni/tn-tenant1/rtmap-rm1",
+                                                                        },
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        },
+    })
+
+
 def test_route_target_state_absent_does_not_affect_other_children(render):
     vrf = {
         "name": "vrf1",

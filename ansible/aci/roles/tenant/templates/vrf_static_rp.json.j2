@@ -1,0 +1,30 @@
+{
+  "pimStaticRPEntryPol": {
+    "attributes": {
+      "rpIp": "{{ static_rp.ip }}",
+      "status": "{{ 'deleted' if static_rp.state is defined and static_rp.state == 'absent' else 'created,modified' }}"
+    }
+    {% if static_rp.route_map is defined %}
+    ,
+    {% set route_map_tenant = static_rp.route_map.tenant if static_rp.route_map is mapping else tenant.name %}
+    {% set route_map_name = static_rp.route_map.name if static_rp.route_map is mapping else static_rp.route_map %}
+    "children": [
+      {
+        "pimRPGrpRangePol": {
+          "attributes": {},
+          "children": [
+            {
+              "rtdmcRsFilterToRtMapPol": {
+                "attributes": {
+                  "tDn": "uni/tn-{{ route_map_tenant }}/rtmap-{{ route_map_name }}",
+                  "status": "{{ 'deleted' if static_rp.state is defined and static_rp.state == 'absent' else 'created,modified' }}"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+    {% endif %}
+  }
+}

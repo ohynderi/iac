@@ -46,6 +46,9 @@ vrf_name_suffix: ''
 vrf_default_description: ''
 vrf_default_enforcement: 'enforced'
 vrf_default_preferred_group: 'disabled'
+vrf_pim_default_mtu: 1500
+vrf_pim_default_fast_convergence: false
+vrf_pim_default_strict_rfc_compliant: false
 
 ap_name_prefix: ''
 ap_name_suffix: ''
@@ -62,6 +65,7 @@ bd_default_l3_unknown_multicast_routing_disabled: 'flood'
 bd_default_arp_flood_routing_enabled: false
 bd_default_arp_flood_routing_disabled: true
 bd_dhcp_relay_label_default_scope: 'tenant'
+bd_default_pim: false
 
 epg_name_prefix: ''
 epg_name_suffix: ''

@@ -15,6 +15,7 @@ def test_state_absent_deletes_and_omits_children(render):
                 "unkMacUcastAct": ABSENT,
                 "unkMcastAct": ABSENT,
                 "arpFlood": ABSENT,
+                "mcastAllow": ABSENT,
             },
             "children": ABSENT,
         },
@@ -35,6 +36,7 @@ def test_state_present_minimal_renders_fvrsctx_only_with_computed_defaults(rende
                 "unkMacUcastAct": "flood",
                 "unkMcastAct": "flood",
                 "arpFlood": "yes",
+                "mcastAllow": "no",
             },
             "children": [
                 {
@@ -149,6 +151,39 @@ def test_l2_l3_unknown_and_arp_flood_overrides(render):
                 "unkMcastAct": "flood",
                 "arpFlood": "yes",
             },
+        },
+    })
+
+
+def test_pim_enabled_override(render):
+    bd = {"name": "bd1", "vrf": "vrf1", "PIM": True}
+    body = render("bd.json.j2", bd_name="bd1", bd=bd)
+
+    assert_matches(body, {
+        "fvBD": {
+            "attributes": {
+                "mcastAllow": "yes",
+            },
+        },
+    })
+
+
+def test_pim_toggle_true_to_false(render):
+    bd_enabled = {"name": "bd1", "vrf": "vrf1", "PIM": True}
+    body_enabled = render("bd.json.j2", bd_name="bd1", bd=bd_enabled)
+
+    assert_matches(body_enabled, {
+        "fvBD": {
+            "attributes": {"mcastAllow": "yes"},
+        },
+    })
+
+    bd_disabled = {"name": "bd1", "vrf": "vrf1", "PIM": False}
+    body_disabled = render("bd.json.j2", bd_name="bd1", bd=bd_disabled)
+
+    assert_matches(body_disabled, {
+        "fvBD": {
+            "attributes": {"mcastAllow": "no"},
         },
     })
 

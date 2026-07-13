@@ -55,6 +55,20 @@
       }
       {% endif %}
 
+      {% if l3out.PIM is defined %}
+      ,
+      {
+        "pimExtP": {
+          "attributes": {
+            "annotation": "",
+            "enabledAf": "ipv4-mcast",
+            "name": "pim",
+            "status": "{{ 'created,modified' if l3out.PIM else 'deleted' }}"
+          }
+        }
+      }
+      {% endif %}
+
       {% if l3out.tags|default([])| length > 0 %},{% endif %}
       {% for tag in l3out.tags | default( [] ) %}
       {
