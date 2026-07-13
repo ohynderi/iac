@@ -5,7 +5,7 @@
   vars:
     path: "/api/mo/uni/infra.json"
     payload: "{{ lookup('template', 'intf_pol_cdp.json.j2') }}"
-    dn: "uni/infra/cdpIfP-{{ pol.name }}"
+    dn: "/api/mo/uni/infra/cdpIfP-{{ pol.name }}"
     pol_name: "{{ intf_pol_name_prefix ~ pol.name ~ intf_pol_name_suffix }}"
 
   loop: "{{ intf_policies.cdp | default( [] ) }}"
@@ -14,7 +14,7 @@
     label: "{{ pol.name }}"
 
   when:
-    - pol.state is defined
+    - pol | has_nested_state
 
   no_log: true
 
@@ -34,7 +34,7 @@
     label: "{{ pol.name }}"
 
   when:
-    - pol.state is defined
+    - pol | has_nested_state
 
   no_log: true
 
@@ -54,7 +54,7 @@
     label: "{{ pol.name }}"
 
   when:
-    - pol.state is defined
+    - pol | has_nested_state
 
   no_log: true
 
@@ -74,6 +74,26 @@
     label: "{{ pol.name }}"
 
   when:
-    - pol.state is defined
+    - pol | has_nested_state
+
+  no_log: true
+
+
+- name: Process Link Layer Policy
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    path: "/api/mo/uni/infra.json"
+    payload: "{{ lookup('template', 'intf_pol_ll.json.j2') }}"
+    dn: "/api/mo/uni/infra/hintfpol-{{ pol.name }}"
+    pol_name: "{{ intf_pol_name_prefix ~ pol.name ~ intf_pol_name_suffix }}"
+
+  loop: "{{ intf_policies.link_layer | default( [] ) }}"
+  loop_control:
+    loop_var: pol
+    label: "{{ pol.name }}"
+
+  when:
+    - pol | has_nested_state
 
   no_log: true

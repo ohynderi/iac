@@ -6,7 +6,7 @@
     path: "/api/mo/uni.json"
     payload: "{{ lookup('template', 'dom_phy.json.j2') }}"
     dn: "/api/mo/uni/phys-{{ dom.name }}"
-    dom_name: "{{ dom_name_prefix ~ dom.name ~ dom_name_suffix }}"
+    dom_name: "{{ dom_phy_name_prefix ~ dom.name ~ dom_phy_name_suffix }}"
 
   loop: "{{ (domains.physical if domains is defined and domains.physical is defined else []) }}"
   loop_control:
@@ -14,7 +14,7 @@
     label: "{{ dom.name }}"
 
   when:
-    - dom.state is defined
+    - dom | has_nested_state
 
   no_log: true
 
@@ -26,7 +26,7 @@
     path: "/api/mo/uni.json"
     payload: "{{ lookup('template', 'dom_l3ext.json.j2') }}"
     dn: "/api/mo/uni/l3dom-{{ dom.name }}"
-    dom_name: "{{ dom_name_prefix ~ dom.name ~ dom_name_suffix }}"
+    dom_name: "{{ dom_l3ext_name_prefix ~ dom.name ~ dom_l3ext_name_suffix }}"
 
   loop: "{{ (domains.l3_external if domains is defined and domains.l3_external is defined else []) }}"
   loop_control:
@@ -34,6 +34,6 @@
     label: "{{ dom.name }}"
 
   when:
-    - dom.state is defined
+    - dom | has_nested_state
 
   no_log: true

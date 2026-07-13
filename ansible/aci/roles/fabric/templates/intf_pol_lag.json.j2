@@ -2,13 +2,38 @@
     "lacpLagPol": {
         "attributes": {
             "name": "{{ pol_name }}",
-            "status": "{{ 'deleted' if pol.state == 'absent' else 'created,modified' }}"
+            "status": "{{ 'deleted' if pol.state is defined and pol.state == 'absent' else 'created,modified' }}"
 
-            {% if pol.state == 'present' %}
+            {% if pol.state | default('present') != 'absent' %}
             ,
-            "descr": "{{ pol.description | default('') }}",
-            "mode": "{{ pol.mode }}"
+            "descr": "{{ pol.description | default(lag_policy_default_description) }}",
+            "mode": "{{ pol.mode }}",
+            "minLinks": "{{ pol.min | default(lag_policy_default_min) }}",
+            "maxLinks": "{{ pol.max | default(lag_policy_default_max) }}",
+            {% set ctrl_flags = [] %}
+            {% if pol.fast_select_hot_standby_ports | default(lag_policy_default_fast_select_hot_standby_ports) %}{% set _ = ctrl_flags.append('fast-sel-hot-stdby') %}{% endif %}
+            {% if pol.graceful_convergence | default(lag_policy_default_graceful_convergence) %}{% set _ = ctrl_flags.append('graceful-conv') %}{% endif %}
+            {% if pol.suspend_individual_port | default(lag_policy_default_suspend_individual_port) %}{% set _ = ctrl_flags.append('susp-individual') %}{% endif %}
+            {% if pol.symmetric_hashing | default(lag_policy_default_symmetric_hashing) %}{% set _ = ctrl_flags.append('symmetric-hash') %}{% endif %}
+            "ctrl": "{{ ctrl_flags | join(',') }}"
             {% endif %}
         }
+        {% if pol.state | default('present') != 'absent' %}
+        ,
+        "children": [
+            {% for tag in pol.tags | default( [] ) %}
+            {
+                "tagAnnotation": {
+                    "attributes": {
+                        "key": "{{ tag.name }}",
+                        "value": "{{ tag.value }}",
+                        "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+                    }
+                }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+        ]
+        {% endif %}
     }
 }

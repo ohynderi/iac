@@ -17,4 +17,4 @@
   when:
     - l3out | has_nested_state
 
-  no_log: true
+  no_log: "{{ no_log_enabled }}"

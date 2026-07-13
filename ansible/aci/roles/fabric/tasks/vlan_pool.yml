@@ -6,7 +6,7 @@
     path: "/api/mo/uni/infra.json"
     payload: "{{ lookup('template', 'vlan_pool.json.j2') }}"
     dn: "/api/mo/uni/infra/vlanns-{{ pool.name }}"
-    pool_name: "{{ vlan_pool_name_prefix ~ pool.name ~ leaf_prof_name_suffix }}"
+    pool_name: "{{ vlan_pool_name_prefix ~ pool.name ~ vlan_pool_name_suffix }}"
 
   loop: "{{ vlan_pools }}"
   loop_control:
@@ -14,6 +14,6 @@
     label: "{{ pool.name }}"
 
   when:
-    - pool.state is defined
+    - pool | has_nested_state
 
   no_log: true

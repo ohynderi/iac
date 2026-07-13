@@ -16,4 +16,4 @@
   when:
     - ap | has_nested_state(include_keys=['tags'])
 
-  no_log: true
+  no_log: "{{ no_log_enabled }}"

@@ -20,4 +20,4 @@
     - esg | has_nested_state
     - ( ap.state is defined and ap.state != 'absent' ) or ap.state is not defined
 
-  no_log: false
+  no_log: "{{ no_log_enabled }}"

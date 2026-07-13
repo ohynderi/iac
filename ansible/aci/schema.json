@@ -62,7 +62,7 @@
         "domains": { "$ref": "#/$defs/domains" },
         "aaeps": { "type": "array", "items": { "$ref": "#/$defs/aaep" } },
         "intf_policies": { "$ref": "#/$defs/intf_policies" },
-        "intf_policy_groups": { "type": "array", "items": { "$ref": "#/$defs/intf_policy_group" } }
+        "interface_policy_groups": { "$ref": "#/$defs/interface_policy_groups" }
       }
     },
 
@@ -116,7 +116,9 @@
       "properties": {
         "name": { "type": "string" },
         "description": { "type": "string" },
+        "allocation_mode": { "type": "string", "enum": ["static", "dynamic"] },
         "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
         "ranges": { "type": "array", "items": { "$ref": "#/$defs/vlan_range" } }
       },
       "required": ["name"]
@@ -126,11 +128,14 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "from": { "type": "integer" },
-        "to": { "type": "integer" },
+        "from_": { "type": "integer" },
+        "to_": { "type": "integer" },
+        "description": { "type": "string" },
+        "role": { "type": "string", "enum": ["external", "internal"] },
+        "allocation_mode": { "type": "string", "enum": ["inherit", "static", "dynamic"] },
         "state": { "$ref": "#/$defs/state" }
       },
-      "required": ["from", "to"]
+      "required": ["from_", "to_"]
     },
 
     "domains": {
@@ -148,7 +153,13 @@
       "properties": {
         "name": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
-        "vlan_pools": { "type": "array", "items": { "$ref": "#/$defs/vlan_pool_ref" } }
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "vlan_pool": {
+          "anyOf": [
+            { "type": "string" },
+            { "$ref": "#/$defs/vlan_pool_ref" }
+          ]
+        }
       },
       "required": ["name"]
     },
@@ -158,6 +169,7 @@
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string" },
+        "allocation_mode": { "type": "string", "enum": ["static", "dynamic"] },
         "state": { "$ref": "#/$defs/state" }
       },
       "required": ["name"]
@@ -169,9 +181,27 @@
       "properties": {
         "name": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
-        "domains": { "type": "array", "items": { "$ref": "#/$defs/aaep_domain_binding" } }
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "domains": { "type": "array", "items": { "$ref": "#/$defs/aaep_domain_binding" } },
+        "epgs": { "type": "array", "items": { "$ref": "#/$defs/aaep_epg_binding" } }
       },
       "required": ["name"]
+    },
+
+    "aaep_epg_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tenant": { "type": "string" },
+        "application_profile": { "type": "string" },
+        "epg": { "type": "string" },
+        "vlan": { "type": "integer" },
+        "mode": { "type": "string", "enum": ["regular", "untagged", "native"] },
+        "deployment": { "type": "string", "enum": ["immediate", "lazy"] },
+        "state": { "$ref": "#/$defs/state" }
+      },
+      "required": ["tenant", "application_profile", "epg", "vlan"]
     },
 
     "aaep_domain_binding": {
@@ -192,8 +222,23 @@
         "lldp": { "type": "array", "items": { "$ref": "#/$defs/lldp_policy" } },
         "cdp": { "type": "array", "items": { "$ref": "#/$defs/cdp_policy" } },
         "mcp": { "type": "array", "items": { "$ref": "#/$defs/mcp_policy" } },
-        "lag": { "type": "array", "items": { "$ref": "#/$defs/lag_policy" } }
+        "lag": { "type": "array", "items": { "$ref": "#/$defs/lag_policy" } },
+        "link_layer": { "type": "array", "items": { "$ref": "#/$defs/ll_policy" } }
       }
+    },
+
+    "ll_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "auto_negotiation": { "type": "boolean" },
+        "speed": { "type": "string", "enum": ["100M", "1G", "10G", "25G", "40G", "400G", "auto", "inherit"] },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } }
+      },
+      "required": ["name", "auto_negotiation", "speed"]
     },
 
     "lldp_policy": {
@@ -204,7 +249,9 @@
         "description": { "type": "string" },
         "receive": { "type": "string", "enum": ["enabled", "disabled"] },
         "transmit": { "type": "string", "enum": ["enabled", "disabled"] },
-        "state": { "$ref": "#/$defs/state" }
+        "DCBXP_version": { "type": "string", "enum": ["IEEE", "CEE"] },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } }
       },
       "required": ["name", "receive", "transmit"]
     },
@@ -216,7 +263,8 @@
         "name": { "type": "string" },
         "admin_state": { "type": "string", "enum": ["enabled", "disabled"] },
         "state": { "$ref": "#/$defs/state" },
-        "description": { "type": "string" }
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } }
       },
       "required": ["name", "admin_state"]
     },
@@ -228,7 +276,11 @@
         "name": { "type": "string" },
         "description": { "type": "string" },
         "admin_state": { "type": "string", "enum": ["enabled", "disabled"] },
-        "state": { "$ref": "#/$defs/state" }
+        "MCP_per_VLAN": { "type": "string", "enum": ["on", "off"] },
+        "mcp_mode": { "type": "string", "enum": ["strict", "non-strict"] },
+        "max_number_of_vlan": { "type": "integer" },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } }
       },
       "required": ["name", "admin_state"]
     },
@@ -242,9 +294,24 @@
         "min": { "type": "integer" },
         "max": { "type": "integer" },
         "mode": { "type": "string", "enum": ["active", "off"] },
-        "state": { "$ref": "#/$defs/state" }
+        "fast_select_hot_standby_ports": { "type": "boolean" },
+        "graceful_convergence": { "type": "boolean" },
+        "suspend_individual_port": { "type": "boolean" },
+        "symmetric_hashing": { "type": "boolean" },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } }
       },
       "required": ["name", "mode"]
+    },
+
+    "interface_policy_groups": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "access": { "type": "array", "items": { "$ref": "#/$defs/intf_policy_group" } },
+        "port-channel": { "type": "array", "items": { "$ref": "#/$defs/intf_policy_group" } },
+        "vpc": { "type": "array", "items": { "$ref": "#/$defs/intf_policy_group" } }
+      }
     },
 
     "intf_policy_group": {
@@ -252,16 +319,19 @@
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string" },
-        "type": { "type": "string", "enum": ["access", "po", "vpc"] },
         "state": { "$ref": "#/$defs/state" },
         "lldp": { "type": "string" },
         "cdp": { "type": "string" },
         "mcp": { "type": "string" },
+        "stp": { "type": "string" },
+        "l2": { "type": "string" },
+        "ll": { "type": "string" },
         "lag": { "type": "string" },
-        "aep": { "type": "string" },
-        "description": { "type": "string" }
+        "aaep": { "type": "string" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } }
       },
-      "required": ["name", "type"]
+      "required": ["name"]
     },
 
     "node": {
@@ -458,11 +528,11 @@
       "properties": {
         "name": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
-        "action": { "type": "string" },
+        "action": { "type": "string", "enum": ["permit", "deny"] },
         "log": { "type": "boolean" },
         "policy_compression": { "type": "boolean" }
       },
-      "required": ["name", "action"]
+      "required": ["name"]
     },
 
     "filter": {

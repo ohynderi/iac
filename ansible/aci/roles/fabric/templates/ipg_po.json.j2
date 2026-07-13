@@ -2,75 +2,73 @@
   "infraAccBndlGrp": {
     "attributes": {
       "name": "{{ ipg_name }}",
-      "status": "{{ 'deleted' if ipg.state == 'absent' else 'created,modified' }}"
-      {% if ipg.state == 'present' %}
+      "status": "{{ 'deleted' if ipg.state is defined and ipg.state == 'absent' else 'created,modified' }}"
+      {% if ipg.state | default('present') != 'absent' %}
       ,
-      "descr": "{{ ipg.description | default('') }}",
-      "lagT": "{{ 'link' if ipg.type == 'po' else 'node' }}"
+      "descr": "{{ ipg.description | default(ipg_default_description) }}",
+      "lagT": "{{ 'link' if ipg_lag_type == 'po' else 'node' }}"
       {% endif %}
     }
-    {% if ipg.state == 'present' %}
+    {% if ipg.state | default('present') != 'absent' %}
     ,
     "children": [
         {
             "infraRsStpIfPol": {
                 "attributes": {
-                    "tnStpIfPolName": "{{ ipg.stp | default('') }}",
+                    "tnStpIfPolName": "{{ ipg.stp | default(ipg_default_stp) }}"
                 }
             }
         },
         {
             "infraRsMcpIfPol": {
                 "attributes": {
-                    "tnMcpIfPolName": "{{ ipg.mcp | default('') }}",
+                    "tnMcpIfPolName": "{{ ipg.mcp | default(ipg_default_mcp) }}"
                 }
             }
         },
         {
             "infraRsAttEntP": {
                 "attributes": {
-                    "tDn": "{{ 'uni/infra/attentp-' + ipg.aep if ipg.aep else ''}}",
+                    "tDn": "{{ 'uni/infra/attentp-' + ipg.aaep if ipg.aaep | default('') else '' }}"
                 }
             }
         },
         {
             "infraRsCdpIfPol": {
                 "attributes": {
-                    "tnCdpIfPolName": "{{ ipg.cdp | default('') }}",
+                    "tnCdpIfPolName": "{{ ipg.cdp | default(ipg_default_cdp) }}"
                 }
             }
         },
         {
             "infraRsLldpIfPol": {
                 "attributes": {
-                    "tnLldpIfPolName": "{{ ipg.lldp | default('') }}",
+                    "tnLldpIfPolName": "{{ ipg.lldp | default(ipg_default_lldp) }}"
                 }
             }
         },
         {
             "infraRsL2IfPol": {
                 "attributes": {
-                    "tnL2IfPolName": "{{ ipg.l2 | default('') }}",
+                    "tnL2IfPolName": "{{ ipg.l2 | default(ipg_default_l2) }}"
                 }
             }
         },
         {
             "infraRsHIfPol": {
                 "attributes": {
-                    "tnFabricHIfPolName": "{{ ipg.ll | default('') }}",
+                    "tnFabricHIfPolName": "{{ ipg.ll | default(ipg_default_ll) }}"
                 }
             }
         },
         {
             "infraRsLacpPol": {
                 "attributes": {
-                    "tnLacpLagPolName": "{{ ipg.lacp | default('') }}",
+                    "tnLacpLagPolName": "{{ ipg.lag | default(ipg_default_lag) }}"
                 }
             }
         }
-        
-        {% if ipg.tag|default([]) | length > 0 %},{% endif %}
-        
+        {% if ipg.tags|default([]) | length > 0 %},{% endif %}
         {% for tag in ipg.tags | default( [] ) %}
         {
             "tagAnnotation": {

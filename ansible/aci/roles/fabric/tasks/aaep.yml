@@ -15,7 +15,7 @@
     label: "{{ aaep.name }}"
 
   when:
-    - aaep.state is defined
+    - aaep | has_nested_state
 
   no_log: true
 

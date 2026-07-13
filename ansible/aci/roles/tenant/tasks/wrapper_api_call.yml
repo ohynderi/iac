@@ -17,7 +17,7 @@
     suppress_previous: true
     suppress_verification: true
   register: rsl
-  ignore_errors: yes
+  ignore_errors: true
   # delegate_to: localhost      # uncomment if you need localhost execution
 
 
@@ -36,7 +36,7 @@
   when:
     - rsl.failed is defined
     - not rsl.failed
-  no_log: true
+  no_log: "{{ no_log_enabled }}"
 
 
 - name: Categorize results
@@ -55,5 +55,5 @@
   when:
     - rsl.failed is defined
     - rsl.failed
-  no_log: true
+  no_log: "{{ no_log_enabled }}"
 

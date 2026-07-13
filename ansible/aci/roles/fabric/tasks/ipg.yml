@@ -8,19 +8,18 @@
     dn: "/api/mo/uni/infra/funcprof/accportgrp-{{ ipg.name }}"
     ipg_name: "{{ ipg_name_prefix ~ ipg.name ~ ipg_name_suffix }}"
 
-  loop: "{{ intf_policy_groups }}"
+  loop: "{{ (interface_policy_groups.access if interface_policy_groups is defined and interface_policy_groups.access is defined else []) }}"
   loop_control:
     loop_var: ipg
     label: "{{ ipg.name }}"
 
   when:
-    - ipg.state is defined
-    - ipg.type == 'access'
+    - ipg | has_nested_state
 
   no_log: true
 
 
-- name: Process Po/vPC IPG
+- name: Process Port-Channel IPG
   include_tasks: wrapper_api_call.yml
 
   vars:
@@ -28,14 +27,35 @@
     payload: "{{ lookup('template', 'ipg_po.json.j2') }}"
     dn: "/api/mo/uni/infra/funcprof/accbundle-{{ ipg.name }}"
     ipg_name: "{{ ipg_name_prefix ~ ipg.name ~ ipg_name_suffix }}"
+    ipg_lag_type: 'po'
 
-  loop: "{{ intf_policy_groups }}"
+  loop: "{{ (interface_policy_groups['port-channel'] if interface_policy_groups is defined and interface_policy_groups['port-channel'] is defined else []) }}"
   loop_control:
     loop_var: ipg
     label: "{{ ipg.name }}"
 
   when:
-    - ipg.state is defined
-    - ipg.type != 'access'
+    - ipg | has_nested_state
+
+  no_log: true
+
+
+- name: Process vPC IPG
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    path: "/api/mo/uni/infra/funcprof/accbundle-{{ ipg.name }}.json"
+    payload: "{{ lookup('template', 'ipg_po.json.j2') }}"
+    dn: "/api/mo/uni/infra/funcprof/accbundle-{{ ipg.name }}"
+    ipg_name: "{{ ipg_name_prefix ~ ipg.name ~ ipg_name_suffix }}"
+    ipg_lag_type: 'vpc'
+
+  loop: "{{ (interface_policy_groups.vpc if interface_policy_groups is defined and interface_policy_groups.vpc is defined else []) }}"
+  loop_control:
+    loop_var: ipg
+    label: "{{ ipg.name }}"
+
+  when:
+    - ipg | has_nested_state
 
   no_log: true

@@ -2,13 +2,34 @@
     "mcpIfPol": {
         "attributes": {
             "name": "{{ pol_name }}",
-            "status": "{{ 'deleted' if pol.state == 'absent' else 'created,modified' }}"
+            "status": "{{ 'deleted' if pol.state is defined and pol.state == 'absent' else 'created,modified' }}"
 
-            {% if pol.state == 'present' %}
+            {% if pol.state | default('present') != 'absent' %}
             ,
-            "descr": "{{ pol.description | default('') }}",
-            "adminSt": "{{ pol.admin_state }}"
+            "descr": "{{ pol.description | default(mcp_policy_default_description) }}",
+            "adminSt": "{{ pol.admin_state }}",
+            "mcpPduPerVlan": "{{ pol.MCP_per_VLAN | default(mcp_policy_default_mcp_per_vlan) }}",
+            "maxPduPerVlanLimit": "{{ pol.max_number_of_vlan | default(mcp_policy_default_max_number_of_vlan) }}",
+            {% set mcp_mode = pol.mcp_mode | default(mcp_policy_default_mcp_mode) %}
+            "mcpMode": "{{ 'on' if mcp_mode == 'strict' else 'off' }}"
             {% endif %}
         }
+        {% if pol.state | default('present') != 'absent' %}
+        ,
+        "children": [
+            {% for tag in pol.tags | default( [] ) %}
+            {
+                "tagAnnotation": {
+                    "attributes": {
+                        "key": "{{ tag.name }}",
+                        "value": "{{ tag.value }}",
+                        "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+                    }
+                }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+        ]
+        {% endif %}
     }
 }

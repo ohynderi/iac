@@ -12,6 +12,8 @@ import_set_rule_task: true
 import_route_map_task: true
 import_mcast_route_map_task: true
 
+no_log_enabled: true
+
 tenant_name_prefix: ''
 tenant_name_suffix: ''
 tenant_default_description: ''

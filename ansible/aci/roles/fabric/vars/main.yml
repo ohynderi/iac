@@ -1,7 +1,6 @@
 ---
 import_aaep_task: true
 import_dom_task: true
-import_dom_task: true
 import_intf_pol_task: true
 import_ipg_task: true
 import_leaf_intf_prof_task: true
@@ -10,15 +9,46 @@ import_vlan_pool_task: true
 
 aaep_name_prefix: ''
 aaep_name_suffix: ''
+aaep_default_description: ''
+aaep_epg_default_deployment: 'lazy'
+aaep_epg_default_mode: 'regular'
 
-dom_name_prefix: ''
-dom_name_suffix: ''
+dom_phy_name_prefix: ''
+dom_phy_name_suffix: ''
+dom_phy_vlan_pool_default_allocation_mode: 'static'
+
+dom_l3ext_name_prefix: ''
+dom_l3ext_name_suffix: ''
+dom_l3ext_vlan_pool_default_allocation_mode: 'static'
 
 intf_pol_name_prefix: ''
 intf_pol_name_suffix: ''
+cdp_policy_default_description: ''
+lldp_policy_default_description: ''
+lldp_policy_default_dcbxp_version: 'CEE'
+mcp_policy_default_description: ''
+mcp_policy_default_mcp_per_vlan: 'on'
+mcp_policy_default_max_number_of_vlan: 256
+mcp_policy_default_mcp_mode: 'non-strict'
+lag_policy_default_description: ''
+lag_policy_default_min: 1
+lag_policy_default_max: 16
+lag_policy_default_fast_select_hot_standby_ports: true
+lag_policy_default_graceful_convergence: true
+lag_policy_default_suspend_individual_port: true
+lag_policy_default_symmetric_hashing: false
+ll_policy_default_description: ''
 
 ipg_name_prefix: ''
 ipg_name_suffix: ''
+ipg_default_description: ''
+ipg_default_stp: ''
+ipg_default_mcp: ''
+ipg_default_cdp: ''
+ipg_default_lldp: ''
+ipg_default_l2: ''
+ipg_default_ll: ''
+ipg_default_lag: ''
 
 leaf_inf_prof_name_prefix: ''
 leaf_inf_prof_name_suffix: ''
@@ -28,3 +58,9 @@ leaf_prof_name_suffix: ''
 
 vlan_pool_name_prefix: ''
 vlan_pool_name_suffix: ''
+vlan_pool_default_description: ''
+vlan_pool_default_allocation_mode: 'dynamic'
+
+vlan_range_default_description: ''
+vlan_range_default_role: 'external'
+vlan_range_default_allocation_mode: 'inherit'

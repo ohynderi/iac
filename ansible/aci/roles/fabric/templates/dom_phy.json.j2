@@ -2,9 +2,9 @@
   "physDomP": {
     "attributes": {
       "name": "{{ dom_name }}",
-      "status": "{{ 'deleted' if dom.state == 'absent' else 'created,modified' }}"
+      "status": "{{ 'deleted' if dom.state is defined and dom.state == 'absent' else 'created,modified' }}"
     }
-    {% if dom.state == 'present' %}
+    {% if dom.state | default('present') != 'absent' %}
     ,
     "children": [
       {% for tag in dom.tags | default( [] ) %}
@@ -20,18 +20,20 @@
       {% if not loop.last %},{% endif %}
       {% endfor %}
 
-      {% if dom.tags|default([])|length > 0 and dom.ranges|default([])|length > 0 %},{% endif %}
-      {% for pool in dom.vlan_pools | default( [] ) %}
+      {% if dom.tags|default([])|length > 0 and dom.vlan_pool is defined %},{% endif %}
+      {% if dom.vlan_pool is defined %}
+      {% set vlan_pool_name = dom.vlan_pool.name if dom.vlan_pool is mapping else dom.vlan_pool %}
+      {% set vlan_pool_allocation_mode = (dom.vlan_pool.allocation_mode | default(dom_phy_vlan_pool_default_allocation_mode)) if dom.vlan_pool is mapping else dom_phy_vlan_pool_default_allocation_mode %}
+      {% set vlan_pool_state = (dom.vlan_pool.state | default('present')) if dom.vlan_pool is mapping else 'present' %}
       {
         "infraRsVlanNs": {
           "attributes": {
-            "tDn": "uni/infra/vlanns-[{{ pool.name }}]-{{ pool.allocation | default('static') }}",
-            "status": "{{ 'deleted' if pool.state is defined and pool.state == 'absent' else 'created,modified' }}"
+            "tDn": "uni/infra/vlanns-[{{ vlan_pool_name }}]-{{ vlan_pool_allocation_mode }}",
+            "status": "{{ 'deleted' if vlan_pool_state == 'absent' else 'created,modified' }}"
           }
         }
       }
-      {% if not loop.last %},{% endif %}
-      {% endfor %}
+      {% endif %}
     ]
     {% endif %}
   }

@@ -6,9 +6,9 @@
   vars:
     aci_cfg_directory: /config/intent/
     schema_location: schema.json
-    enable_fabric_role: false
+    enable_fabric_role: true
     enable_node_role: false
-    enable_tenant_role: true
+    enable_tenant_role: false
 
   tasks:
     #
@@ -48,7 +48,7 @@
       loop: "{{ all_cfg_files.files }}"
       loop_control:
         label: "{{ item.path }}"
-      no_log: false
+      no_log: true
 
     #
     # Validing the intent against the schema
@@ -64,16 +64,28 @@
     #
     # Building temporary structures
     #
-    - set_fact: # Building the ipg_to_type_map dictionary
-        ipg_to_type_map: "{{ ipg_to_type_map | combine( { ipg.name : { 'ipg_type': ipg_type, 'lag_type': lag_type }} ) }}"
+    - set_fact: # Building the ipg_to_type_map dictionary (access entries)
+        ipg_to_type_map: "{{ ipg_to_type_map | combine( { ipg.name : { 'ipg_type': 'accportgrp', 'lag_type': 'link' }} ) }}"
 
-      loop: "{{ intent.fabric.intf_policy_groups | default([]) }}"
+      loop: "{{ intent.fabric.interface_policy_groups.access | default([]) }}"
       loop_control:
         loop_var: ipg
+      no_log: true
 
-      vars:
-        ipg_type: "{{ 'accportgrp' if ipg.type == 'access' else 'accbundle' }}"
-        lag_type: "{{ 'node' if ipg.type == 'vpc' else 'link' }}" 
+    - set_fact: # Building the ipg_to_type_map dictionary (port-channel entries)
+        ipg_to_type_map: "{{ ipg_to_type_map | combine( { ipg.name : { 'ipg_type': 'accbundle', 'lag_type': 'link' }} ) }}"
+
+      loop: "{{ intent.fabric.interface_policy_groups['port-channel'] | default([]) }}"
+      loop_control:
+        loop_var: ipg
+      no_log: true
+
+    - set_fact: # Building the ipg_to_type_map dictionary (vpc entries)
+        ipg_to_type_map: "{{ ipg_to_type_map | combine( { ipg.name : { 'ipg_type': 'accbundle', 'lag_type': 'node' }} ) }}"
+
+      loop: "{{ intent.fabric.interface_policy_groups.vpc | default([]) }}"
+      loop_control:
+        loop_var: ipg
       no_log: true
 
     #
@@ -86,7 +98,7 @@
         leaf_intf_profiles: "{{ intent.fabric.leaf_intf_profiles | default([]) }}"
         leaf_profiles: "{{ intent.fabric.leaf_profiles | default([]) }}"
         intf_policies: "{{ intent.fabric.intf_policies | default([]) }}"
-        intf_policy_groups: "{{ intent.fabric.intf_policy_groups | default([]) }}"
+        interface_policy_groups: "{{ intent.fabric.interface_policy_groups | default({}) }}"
         domains: "{{ intent.fabric.domains | default([]) }}"
         vlan_pools: "{{ intent.fabric.vlan_pools | default([]) }}"
         aaeps: "{{ intent.fabric.aaeps | default([]) }}"

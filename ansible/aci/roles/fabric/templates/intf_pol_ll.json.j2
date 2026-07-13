@@ -1,15 +1,14 @@
 {
-    "lldpIfPol": {
+    "fabricHIfPol": {
         "attributes": {
             "name": "{{ pol_name }}",
             "status": "{{ 'deleted' if pol.state is defined and pol.state == 'absent' else 'created,modified' }}"
 
             {% if pol.state | default('present') != 'absent' %}
             ,
-            "descr": "{{ pol.description | default(lldp_policy_default_description) }}",
-            "adminRxSt": "{{ pol.receive }}",
-            "adminTxSt": "{{ pol.transmit }}",
-            "portDCBXPVer": "{{ pol.DCBXP_version | default(lldp_policy_default_dcbxp_version) }}"
+            "descr": "{{ pol.description | default(ll_policy_default_description) }}",
+            "autoNeg": "{{ 'on' if pol.auto_negotiation else 'off' }}",
+            "speed": "{{ pol.speed }}"
             {% endif %}
         }
         {% if pol.state | default('present') != 'absent' %}

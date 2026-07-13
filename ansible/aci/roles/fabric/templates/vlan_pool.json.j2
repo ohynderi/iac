@@ -2,14 +2,14 @@
   "fvnsVlanInstP": {
     "attributes": {
       "name": "{{ pool_name }}",
-      "status": "{{ 'deleted' if pool.state == 'absent' else 'created,modified' }}"
-      {% if pool.state == 'present' %}
+      "status": "{{ 'deleted' if pool.state is defined and pool.state == 'absent' else 'created,modified' }}"
+      {% if pool.state | default('present') != 'absent' %}
       ,
-      "descr": "{{ pool.description | default('') }}",
-      "allocMode": "{{ pool.allocation | default('dynamic') }}"
+      "descr": "{{ pool.description | default(vlan_pool_default_description) }}",
+      "allocMode": "{{ pool.allocation_mode | default(vlan_pool_default_allocation_mode) }}"
       {% endif %}
     }
-    {% if pool.state == 'present' %}
+    {% if pool.state | default('present') != 'absent' %}
     ,
     "children": [
       {% for tag in pool.tags | default( [] ) %}
@@ -30,11 +30,11 @@
       {
         "fvnsEncapBlk": {
           "attributes": {
-            "from": "vlan-{{ range.from }}",
-            "to": "vlan-{{ range.to }}",
-            "descr": "{{ range.description | default('') }}",
-            "role": "{{ range.role| default('external') }}",
-            "allocMode": "{{ range.allocation | default('inherit') }}",
+            "from": "vlan-{{ range.from_ }}",
+            "to": "vlan-{{ range.to_ }}",
+            "descr": "{{ range.description | default(vlan_range_default_description) }}",
+            "role": "{{ range.role | default(vlan_range_default_role) }}",
+            "allocMode": "{{ range.allocation_mode | default(vlan_range_default_allocation_mode) }}",
             "status": "{{ 'deleted' if range.state is defined and range.state == 'absent' else 'created,modified' }}"
           }
         }

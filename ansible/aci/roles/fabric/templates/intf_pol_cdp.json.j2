@@ -2,13 +2,30 @@
     "cdpIfPol": {
         "attributes": {
             "name": "{{ pol_name }}",
-            "status": "{{ 'deleted' if pol.state == 'absent' else 'created,modified' }}"
+            "status": "{{ 'deleted' if pol.state is defined and pol.state == 'absent' else 'created,modified' }}"
 
-            {% if pol.state == 'present' %}
+            {% if pol.state | default('present') != 'absent' %}
             ,
-            "descr": "{{ pol.description | default('') }}",
+            "descr": "{{ pol.description | default(cdp_policy_default_description) }}",
             "adminSt": "{{ pol.admin_state }}"
             {% endif %}
         }
+        {% if pol.state | default('present') != 'absent' %}
+        ,
+        "children": [
+            {% for tag in pol.tags | default( [] ) %}
+            {
+                "tagAnnotation": {
+                    "attributes": {
+                        "key": "{{ tag.name }}",
+                        "value": "{{ tag.value }}",
+                        "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+                    }
+                }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+        ]
+        {% endif %}
     }
 }

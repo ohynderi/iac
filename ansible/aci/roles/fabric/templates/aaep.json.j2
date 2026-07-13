@@ -2,14 +2,14 @@
   "infraAttEntityP": {
     "attributes": {
       "name": "{{ aaep_name }}",
-      "status": "{{ 'deleted' if aaep.state == 'absent' else 'created,modified' }}"
+      "status": "{{ 'deleted' if aaep.state is defined and aaep.state == 'absent' else 'created,modified' }}"
 
-      {% if aaep.state == 'present' %}
+      {% if aaep.state | default('present') != 'absent' %}
       ,
-      "descr": "{{ aaep.description | default('') }}"
+      "descr": "{{ aaep.description | default(aaep_default_description) }}"
       {% endif %}
     }
-    {% if aaep.state == 'present' %}
+    {% if aaep.state | default('present') != 'absent' %}
     ,
     "children": [
       {% for tag in aaep.tags | default( [] ) %}
@@ -31,12 +31,39 @@
         "infraRsDomP": {
           "attributes": {
             "tDn": "uni/{{ 'l3dom' if dom.type == 'l3_external' else 'phys' }}-{{ dom.name }}",
-            "status": "{{ 'deleted' if pool.state is defined and dom.state == 'absent' else 'created,modified' }}"
+            "status": "{{ 'deleted' if dom.state is defined and dom.state == 'absent' else 'created,modified' }}"
           }
         }
       }
       {% if not loop.last %},{% endif %}
       {% endfor %}
+
+      {% if (aaep.tags|default([])|length > 0 or aaep.domains|default([])|length > 0) and aaep.epgs|default([])|length > 0 %},{% endif %}
+      {% if aaep.epgs | default( [] ) | length > 0 %}
+      {
+        "infraProvAcc": {
+          "attributes": {
+            "name": "provacc"
+          },
+          "children": [
+            {% for epg in aaep.epgs %}
+            {
+              "infraRsFuncToEpg": {
+                "attributes": {
+                  "tDn": "uni/tn-{{ epg.tenant }}/ap-{{ epg.application_profile }}/epg-{{ epg.epg }}",
+                  "encap": "vlan-{{ epg.vlan }}",
+                  "mode": "{{ epg.mode | default(aaep_epg_default_mode) }}",
+                  "instrImedcy": "{{ epg.deployment | default(aaep_epg_default_deployment) }}",
+                  "status": "{{ 'deleted' if epg.state is defined and epg.state == 'absent' else 'created,modified' }}"
+                }
+              }
+            }
+            {% if not loop.last %},{% endif %}
+            {% endfor %}
+          ]
+        }
+      }
+      {% endif %}
     ]
     {% endif %}
   }
