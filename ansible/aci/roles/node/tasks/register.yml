@@ -1,0 +1,14 @@
+---
+- name: Process Node Registration
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    path: "/api/mo/uni/controller/nodeidentpol.json"
+    payload: "{{ lookup('template', 'register.json.j2') }}"
+    dn: "/api/mo/uni/controller/nodeidentpol/nodep-{{ node.sn }}"
+
+  when:
+    - node.state is defined
+    - node.state == 'present'
+
+  no_log: true

@@ -1,0 +1,46 @@
+{
+  "fabricExplicitGEp": {
+    "attributes": {
+      "name": "{{ vpc_grp_name }}",
+      "id": "{{ vpc_grp.group_id }}",
+      "status": "{{ 'deleted' if vpc_grp.state is defined and vpc_grp.state == 'absent' else 'created,modified' }}"
+    }
+    {% if vpc_grp.state | default('present') != 'absent' %}
+    ,
+    "children": [
+      {
+        "fabricNodePEp": {
+          "attributes": {
+            "id": "{{ vpc_grp.leaf_id }}",
+            "podId": "{{ vpc_grp.pod_id }}"
+          }
+        }
+      },
+      {
+        "fabricNodePEp": {
+          "attributes": {
+            "id": "{{ vpc_grp.peer_leaf_id }}",
+            "podId": "{{ vpc_grp.pod_id }}"
+          }
+        }
+      }
+
+      {% if vpc_grp.tags|default([])| length > 0 %},{% endif %}
+
+      {% for tag in vpc_grp.tags | default( [] ) %}
+      {
+        "tagAnnotation": {
+          "attributes": {
+            "key": "{{ tag.name }}",
+            "value": "{{ tag.value }}",
+            "status": "{{ 'deleted' if tag.state is defined and tag.state == 'absent' else 'created,modified' }}"
+          }
+        }
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+
+    ]
+    {% endif %}
+  }
+}

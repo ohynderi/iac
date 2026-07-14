@@ -8,12 +8,12 @@
     dn: "/api/mo/uni/infra/accportprof-{{ leaf_intf_prof.name }}"
     leaf_intf_prof_name: "{{ leaf_inf_prof_name_prefix ~ leaf_intf_prof.name ~ leaf_inf_prof_name_suffix }}"
 
-  loop: "{{ leaf_intf_profiles }}"
+  loop: "{{ leaf_interface_profiles }}"
   loop_control:
     loop_var: leaf_intf_prof
     label: "{{ leaf_intf_prof.name }}"
 
   when:
-    - leaf_intf_prof.state is defined
+    - leaf_intf_prof | has_nested_state
 
   no_log: true

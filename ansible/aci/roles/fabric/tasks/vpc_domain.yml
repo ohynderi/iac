@@ -1,0 +1,19 @@
+---
+- name: Process VPC Protection Group
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    vpc_grp_name: "{{ vpc_protection_group_name_prefix ~ vpc_grp.name ~ vpc_protection_group_name_suffix }}"
+    path: "/api/mo/uni/fabric/protpol.json"
+    payload: "{{ lookup('template', 'vpc_domain.json.j2') }}"
+    dn: "/api/mo/uni/fabric/protpol/expgep-{{ vpc_grp.name }}"
+
+  loop: "{{ vpc_protection_groups | default([]) }}"
+  loop_control:
+    loop_var: vpc_grp
+    label: "{{ vpc_grp.name }}"
+
+  when:
+    - vpc_grp | has_nested_state
+
+  no_log: true

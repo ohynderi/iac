@@ -1,0 +1,14 @@
+---
+- name: Process Node Decommission
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    path: "/api/mo/uni/fabric/outofsvc.json"
+    payload: "{{ lookup('template', 'decommission.json.j2') }}"
+    dn: "/api/mo/uni/fabric/outofsvc/rsdecommissionNode-[topology/pod-{{ node.pod_id }}/node-{{ node.leaf_id }}]"
+
+  when:
+    - node.state is defined
+    - node.state == 'absent'
+
+  no_log: true

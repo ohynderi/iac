@@ -15,7 +15,6 @@
       "items": { "$ref": "#/$defs/node" }
     }
   },
-  "required": ["tenants"],
   "$defs": {
     "state": {
       "type": "string",
@@ -56,13 +55,14 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "leaf_intf_profiles": { "type": "array", "items": { "$ref": "#/$defs/leaf_intf_profile" } },
+        "leaf_interface_profiles": { "type": "array", "items": { "$ref": "#/$defs/leaf_intf_profile" } },
         "leaf_profiles": { "type": "array", "items": { "$ref": "#/$defs/leaf_profile" } },
         "vlan_pools": { "type": "array", "items": { "$ref": "#/$defs/vlan_pool" } },
         "domains": { "$ref": "#/$defs/domains" },
         "aaeps": { "type": "array", "items": { "$ref": "#/$defs/aaep" } },
         "intf_policies": { "$ref": "#/$defs/intf_policies" },
-        "interface_policy_groups": { "$ref": "#/$defs/interface_policy_groups" }
+        "interface_policy_groups": { "$ref": "#/$defs/interface_policy_groups" },
+        "vpc_protection_groups": { "type": "array", "items": { "$ref": "#/$defs/vpc_protection_group" } }
       }
     },
 
@@ -71,7 +71,10 @@
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string" },
-        "state": { "$ref": "#/$defs/state" }
+        "state": { "$ref": "#/$defs/state" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } },
+        "interface_selectors": { "type": "array", "items": { "$ref": "#/$defs/node_interface" } }
       },
       "required": ["name"]
     },
@@ -83,7 +86,9 @@
         "name": { "type": "string" },
         "state": { "$ref": "#/$defs/state" },
         "leaf_blocks": { "type": "array", "items": { "$ref": "#/$defs/leaf_block" } },
-        "leaf_interface_profiles": { "type": "array", "items": { "$ref": "#/$defs/leaf_interface_profile_ref" } }
+        "leaf_interface_profiles": { "type": "array", "items": { "$ref": "#/$defs/leaf_interface_profile_ref" } },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } }
       },
       "required": ["name"]
     },
@@ -92,12 +97,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "from": { "type": "integer" },
-        "to": { "type": "integer" },
+        "from_": { "type": "integer" },
+        "to_": { "type": "integer" },
         "name": { "type": "string" },
         "state": { "$ref": "#/$defs/state" }
       },
-      "required": ["from", "to"]
+      "required": ["from_", "to_"]
     },
 
     "leaf_interface_profile_ref": {
@@ -308,13 +313,32 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "access": { "type": "array", "items": { "$ref": "#/$defs/intf_policy_group" } },
-        "port-channel": { "type": "array", "items": { "$ref": "#/$defs/intf_policy_group" } },
-        "vpc": { "type": "array", "items": { "$ref": "#/$defs/intf_policy_group" } }
+        "access": { "type": "array", "items": { "$ref": "#/$defs/intf_policy_group_access" } },
+        "port-channel": { "type": "array", "items": { "$ref": "#/$defs/intf_policy_group_bundle" } },
+        "vpc": { "type": "array", "items": { "$ref": "#/$defs/intf_policy_group_bundle" } }
       }
     },
 
-    "intf_policy_group": {
+    "intf_policy_group_access": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "lldp": { "type": "string" },
+        "cdp": { "type": "string" },
+        "mcp": { "type": "string" },
+        "stp": { "type": "string" },
+        "l2": { "type": "string" },
+        "ll": { "type": "string" },
+        "aaep": { "type": "string" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } }
+      },
+      "required": ["name"]
+    },
+
+    "intf_policy_group_bundle": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -342,13 +366,23 @@
         "state": { "$ref": "#/$defs/state" },
         "description": { "type": "string" },
         "type": { "type": "string", "enum": ["leaf", "spine"] },
-        "id": { "type": "integer" },
+        "leaf_id": { "type": "integer" },
+        "pod_id": { "type": "integer" },
         "sn": { "type": "string" },
+        "role": { "type": "string", "enum": ["leaf", "spine", "remote-leaf-wan"] },
+        "extended_pool_id": { "type": "integer" },
         "intf_profile": { "type": "string" },
         "vpc_intf_profile": { "type": "string" },
         "interfaces": { "type": "array", "items": { "$ref": "#/$defs/node_interface" } }
       },
-      "required": ["name", "type", "id", "sn", "intf_profile"]
+      "required": ["name", "type", "leaf_id", "pod_id", "sn", "role"],
+      "if": {
+        "properties": { "role": { "const": "remote-leaf-wan" } },
+        "required": ["role"]
+      },
+      "then": {
+        "required": ["extended_pool_id"]
+      }
     },
 
     "node_interface": {
@@ -356,11 +390,34 @@
       "additionalProperties": false,
       "properties": {
         "port": { "type": "integer" },
+        "from_port": { "type": "integer" },
+        "to_port": { "type": "integer" },
         "card": { "type": "integer" },
         "intf_pol_group": { "type": "string" },
-        "state": { "$ref": "#/$defs/state" }
+        "selector_name": { "type": "string" },
+        "selector_description": { "type": "string" },
+        "port_block_name": { "type": "string" },
+        "port_block_description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } }
       },
-      "required": ["port", "card", "intf_pol_group"]
+      "required": ["card", "intf_pol_group"]
+    },
+
+    "vpc_protection_group": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "group_id": { "type": "integer" },
+        "pod_id": { "type": "integer" },
+        "leaf_id": { "type": "integer" },
+        "peer_leaf_id": { "type": "integer" },
+        "description": { "type": "string" },
+        "state": { "$ref": "#/$defs/state" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tag" } }
+      },
+      "required": ["name", "group_id", "pod_id", "leaf_id", "peer_leaf_id"]
     },
 
     "tag": {
@@ -398,8 +455,8 @@
       "properties": {
         "state": { "$ref": "#/$defs/state" },
         "mtu": { "type": "integer" },
-        "fast-convergenace": { "type": "boolean" },
-        "strict-RFC-compilant": { "type": "boolean" },
+        "fast-convergence": { "type": "boolean" },
+        "strict-RFC-compliant": { "type": "boolean" },
         "static_rp": { "type": "array", "items": { "$ref": "#/$defs/vrf_pim_static_rp" } }
       }
     },

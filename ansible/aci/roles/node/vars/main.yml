@@ -1,2 +1,6 @@
 ---
-# vars file for fabric
+# vars file for node
+
+intf_default_selector_description: ''
+intf_default_port_block_name: 'block2'
+intf_default_port_block_description: ''

@@ -10,6 +10,7 @@
       {% endif %}
     }
     {% if ipg.state | default('present') != 'absent' %}
+    {% set aaep_tdn = ('uni/infra/attentp-' ~ ipg.aaep) if ipg.aaep is defined and ipg.aaep else '' %}
     ,
     "children": [
         {
@@ -29,7 +30,7 @@
         {
             "infraRsAttEntP": {
                 "attributes": {
-                    "tDn": "{{ 'uni/infra/attentp-' + ipg.aaep if ipg.aaep | default('') else '' }}"
+                    "tDn": "{{ aaep_tdn }}"
                 }
             }
         },

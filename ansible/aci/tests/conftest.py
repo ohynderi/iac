@@ -15,6 +15,10 @@ FABRIC_ROLE_DIR = ROLES_DIR / "fabric"
 FABRIC_TEMPLATES_DIR = FABRIC_ROLE_DIR / "templates"
 FABRIC_ROLE_VARS = yaml.safe_load((FABRIC_ROLE_DIR / "vars" / "main.yml").read_text())
 
+NODE_ROLE_DIR = ROLES_DIR / "node"
+NODE_TEMPLATES_DIR = NODE_ROLE_DIR / "templates"
+NODE_ROLE_VARS = yaml.safe_load((NODE_ROLE_DIR / "vars" / "main.yml").read_text())
+
 
 def _make_render(templates_dir, role_vars):
     env = jinja2.Environment(
@@ -47,3 +51,9 @@ def render():
 def render_fabric():
     """Same as `render`, but for the fabric role's templates/vars."""
     return _make_render(FABRIC_TEMPLATES_DIR, FABRIC_ROLE_VARS)
+
+
+@pytest.fixture
+def render_node():
+    """Same as `render`, but for the node role's templates/vars."""
+    return _make_render(NODE_TEMPLATES_DIR, NODE_ROLE_VARS)

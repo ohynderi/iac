@@ -2,14 +2,14 @@
   "infraNodeP": {
     "attributes": {
       "name": "{{ leaf_prof_name }}",
-      "status": "{{ 'deleted' if leaf_prof.state == 'absent' else 'created,modified' }}"
+      "status": "{{ 'deleted' if leaf_prof.state is defined and leaf_prof.state == 'absent' else 'created,modified' }}"
 
-      {% if leaf_prof.state == 'present' %}
+      {% if leaf_prof.state | default('present') != 'absent' %}
       ,
-      "descr": "{{ leaf_prof.description | default('') }}"
+      "descr": "{{ leaf_prof.description | default(leaf_prof_default_description) }}"
       {% endif %}
     }
-    {% if leaf_prof.state == 'present' %}
+    {% if leaf_prof.state | default('present') != 'absent' %}
     ,
     "children": [
       {% for block in leaf_prof.leaf_blocks | default( [] ) %}
@@ -18,15 +18,15 @@
           "attributes": {
             "name": "{{ block.name }}",
             "type": "range",
-            "status": "{{ 'deleted' if range.state is defined and block.state == 'absent' else 'created,modified' }}"
+            "status": "{{ 'deleted' if block.state is defined and block.state == 'absent' else 'created,modified' }}"
             },
             "children": [
               {
                 "infraNodeBlk": {
                   "attributes": {
                     "name": "{{ block.name }}",
-                    "from_": "{{ block.from }}",
-                    "to_": "{{ block.to }}",
+                    "from_": "{{ block.from_ }}",
+                    "to_": "{{ block.to_ }}",
                     "status": "{{ 'deleted' if block.state is defined and block.state == 'absent' else 'created,modified' }}"
                   }
                 }
@@ -51,7 +51,7 @@
       {% if not loop.last %},{% endif %}
       {% endfor %}
 
-      {% if ( leaf_prof.ranges|default([])|length > 0 or leaf_prof.leaf_interface_profiles|default([])|length > 0 ) and leaf_prof.tags|default([])|length > 0  %},{% endif %}
+      {% if ( leaf_prof.leaf_blocks|default([])|length > 0 or leaf_prof.leaf_interface_profiles|default([])|length > 0 ) and leaf_prof.tags|default([])|length > 0  %},{% endif %}
 
       {% for tag in leaf_prof.tags | default( [] ) %}
       {

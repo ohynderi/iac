@@ -1,0 +1,31 @@
+---
+# Copy of roles/node/tasks/intf.yml (same logic, applied per-profile via
+# leaf_interface_profiles instead of per-node via node.interfaces).
+# Keep both in sync when changing one.
+- name: Process Leaf Interface Profile Selector
+  include_tasks: wrapper_api_call.yml
+
+  vars:
+    leaf_intf_prof: "{{ prof_intf_pair.0 }}"
+    intf: "{{ prof_intf_pair.1 }}"
+    leaf_intf_prof_name: "{{ leaf_inf_prof_name_prefix ~ leaf_intf_prof.name ~ leaf_inf_prof_name_suffix }}"
+    intf_from_port: "{{ intf.from_port | default(intf.port) }}"
+    intf_to_port: "{{ intf.to_port | default(intf.port) }}"
+    intf_name: >-
+      {{ intf.selector_name if intf.selector_name is defined else
+         'eth' ~ intf.card ~ '_' ~ intf_from_port ~ ('-' ~ intf_to_port if intf_to_port != intf_from_port else '') }}
+    ipg_type: "{{ ipg_to_type_map[ intf.intf_pol_group ][ 'ipg_type'] }}"
+    path: "/api/mo/uni/infra/accportprof-{{ leaf_intf_prof_name }}/hports-{{ intf_name }}-typ-range.json"
+    payload: "{{ lookup('template', 'intf_selector.json.j2') }}"
+    dn: "/api/mo/uni/infra/accportprof-{{ leaf_intf_prof_name }}/hports-{{ intf_name }}-typ-range"
+
+  loop: "{{ query('subelements', leaf_interface_profiles | default([]), 'interface_selectors', {'skip_missing': True}) }}"
+  loop_control:
+    loop_var: prof_intf_pair
+    label: "{{ [ leaf_intf_prof.name, intf.intf_pol_group ] | join('/') }}"
+
+  when:
+    - intf | has_nested_state
+    - ( leaf_intf_prof.state is defined and leaf_intf_prof.state != 'absent' ) or leaf_intf_prof.state is not defined
+
+  no_log: true

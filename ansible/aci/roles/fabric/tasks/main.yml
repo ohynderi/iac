@@ -7,6 +7,10 @@
   include_tasks: leaf_intf_prof.yml
   when: import_leaf_intf_prof_task
 
+- name: Import Leaf Interface Profile Selector Tasks
+  include_tasks: intf_selector.yml
+  when: import_intf_selector_task
+
 - name: Import interface policy tasks
   include_tasks: intf_pol.yml
   when: import_intf_pol_task
@@ -26,3 +30,7 @@
 - name: Import interface policy groups tasks
   include_tasks: ipg.yml
   when: import_ipg_task
+
+- name: Import VPC Protection Group tasks
+  include_tasks: vpc_domain.yml
+  when: import_vpc_domain_task

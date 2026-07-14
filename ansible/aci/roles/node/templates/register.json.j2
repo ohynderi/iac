@@ -1,0 +1,20 @@
+{
+  "fabricNodeIdentP": {
+    "attributes": {
+      "serial": "{{ node.sn }}",
+      "nodeId": "{{ node.leaf_id }}",
+      "podId": "{{ node.pod_id }}",
+      "name": "{{ node.name }}",
+
+    {% if node.role == 'remote-leaf-wan' and node.extended_pool_id is defined %}
+      "role": "leaf",
+      "nodeType": "remote-leaf-wan",
+      "extPoolId": "{{ node.extended_pool_id }}",
+    {% else %}
+      "role": "{{ node.role }}",
+    {% endif %}
+
+      "status": "{{ status | default('created,modified') }}"
+    }
+  }
+}

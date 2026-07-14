@@ -2,14 +2,14 @@
   "infraAccPortP": {
     "attributes": {
       "name": "{{ leaf_intf_prof_name }}",
-      "status": "{{ 'deleted' if leaf_intf_prof.state == 'absent' else 'created,modified' }}"
+      "status": "{{ 'deleted' if leaf_intf_prof.state is defined and leaf_intf_prof.state == 'absent' else 'created,modified' }}"
 
-      {% if leaf_intf_prof.state == 'present' %}
+      {% if leaf_intf_prof.state | default('present') != 'absent' %}
       ,
-      "descr": "{{ leaf_intf_prof.description | default('') }}"
+      "descr": "{{ leaf_intf_prof.description | default(leaf_intf_prof_default_description) }}"
       {% endif %}
     }
-    {% if leaf_intf_prof.state == 'present' %}
+    {% if leaf_intf_prof.state | default('present') != 'absent' %}
     ,
     "children": [
       {% for tag in leaf_intf_prof.tags | default( [] ) %}

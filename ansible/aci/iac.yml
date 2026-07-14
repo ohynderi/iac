@@ -7,8 +7,8 @@
     aci_cfg_directory: /config/intent/
     schema_location: schema.json
     enable_fabric_role: true
-    enable_node_role: false
-    enable_tenant_role: false
+    enable_node_role: true
+    enable_tenant_role: true
 
   tasks:
     #
@@ -51,7 +51,7 @@
       no_log: true
 
     #
-    # Validing the intent against the schema
+    # Validating the intent against the schema
     #
     - ansible.utils.validate: # Validate app_config against schema
         data: "{{ intent | from_yaml | to_json }}"
@@ -95,13 +95,14 @@
       include_role:
         name: fabric
       vars:
-        leaf_intf_profiles: "{{ intent.fabric.leaf_intf_profiles | default([]) }}"
+        leaf_interface_profiles: "{{ intent.fabric.leaf_interface_profiles | default([]) }}"
         leaf_profiles: "{{ intent.fabric.leaf_profiles | default([]) }}"
         intf_policies: "{{ intent.fabric.intf_policies | default([]) }}"
         interface_policy_groups: "{{ intent.fabric.interface_policy_groups | default({}) }}"
         domains: "{{ intent.fabric.domains | default([]) }}"
         vlan_pools: "{{ intent.fabric.vlan_pools | default([]) }}"
         aaeps: "{{ intent.fabric.aaeps | default([]) }}"
+        vpc_protection_groups: "{{ intent.fabric.vpc_protection_groups | default([]) }}"
       when:
         - enable_fabric_role
 

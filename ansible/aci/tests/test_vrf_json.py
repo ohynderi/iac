@@ -363,8 +363,8 @@ def test_pim_mtu_and_ctrl_flags_overrides(render):
         "name": "vrf1",
         "PIM": {
             "mtu": 9000,
-            "fast-convergenace": True,
-            "strict-RFC-compilant": True,
+            "fast-convergence": True,
+            "strict-RFC-compliant": True,
         },
     }
     body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf)
@@ -388,7 +388,7 @@ def test_pim_mtu_and_ctrl_flags_overrides(render):
 
 
 def test_pim_single_ctrl_flag(render):
-    vrf = {"name": "vrf1", "PIM": {"fast-convergenace": True}}
+    vrf = {"name": "vrf1", "PIM": {"fast-convergence": True}}
     body = render("vrf.json.j2", vrf_name="vrf1", vrf=vrf)
 
     assert_matches(body, {

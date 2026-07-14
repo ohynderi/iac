@@ -157,9 +157,9 @@ Top level:
 
 | Key       | Required | Contents |
 |-----------|----------|----------|
-| `tenants` | yes      | array of tenant objects |
-| `fabric`  | no       | leaf/interface profiles, VLAN pools, domains, AAEPs, interface policies (lldp/cdp/mcp/lag), interface policy groups |
-| `nodes`   | no       | per-switch `id`, `sn`, `intf_profile`, `interfaces[]` (port/card → `intf_pol_group`) |
+| `tenants` | no       | array of tenant objects |
+| `fabric`  | no       | `leaf_profiles`/`leaf_interface_profiles`, `vlan_pools`, `domains` (physical/l3_external), `aaeps`, `intf_policies` (cdp/lldp/mcp/lag/link_layer), `interface_policy_groups` (access/port-channel/vpc buckets), `vpc_protection_groups` |
+| `nodes`   | no       | per-switch `leaf_id`/`pod_id`/`sn`/`role` (registration or decommission, gated on `state`), `intf_profile`/`vpc_intf_profile`/`interfaces[]` (port selectors → `intf_pol_group`) |
 
 Tenant object nests: `vrfs`, `bridge_domains` (with `subnets`, `l3outs`), `filters`
 (with `entries`), `contracts` (with `subjects`/filters), `application_profiles` (with
@@ -220,30 +220,20 @@ A few things worth cleaning up or confirming before relying on this further:
    `roles/tenant` have it active. That means a failed fabric API call dumps its full
    payload to the console/log, but failed node/tenant calls don't — likely an oversight
    rather than an intentional inconsistency.
-3. **`schema.json` requires `tenants` at the top level**, but every consumer
-   (`intent.tenants | default([])` in `iac.yml`, `enable_tenant_role` toggle) treats it
-   as optional. A fabric-only or node-only intent (no tenants at all) will fail schema
-   validation even though the playbook itself supports that. Consider dropping
-   `"required": ["tenants"]`.
-4. **Small copy-paste artifacts:**
+3. **Small copy-paste artifacts:**
    - `roles/fabric/vars/main.yml` defines `import_dom_task: true` twice.
    - `roles/tenant/tasks/main.yml`'s tenant task has `import_tenant_task` repeated
      twice in its `when:` list.
    These are harmless (YAML/Ansible just uses the last value / a redundant condition)
    but worth trimming.
-5. **`roles/node` doesn't follow the `import_<task>_task` toggle convention** used by
-   `fabric`/`tenant` (`roles/node/vars/main.yml` is empty) and `main.yml` has
-   commented-out includes for `leaf.yml` and `vpc_domain.yml` — standalone leaf
-   management and VPC protection groups look like parked/incomplete work rather than
-   deliberate scope.
-6. **Pending uncommitted change:** `iac.yml` currently has `aci_cfg_directory` changed
+4. **Pending uncommitted change:** `iac.yml` currently has `aci_cfg_directory` changed
    from `intent/` (relative) to `/config/intent/` (absolute) — consistent with reading
    intent from a mounted path (e.g. a container), but worth double-checking that's the
    intended deployment model before committing.
-7. There's a sibling project, `ansible/aci_async/`, that looks like an async variant of
+5. There's a sibling project, `ansible/aci_async/`, that looks like an async variant of
    this same automation (same role names) — not covered by this doc; worth checking
    whether it's meant to replace this one or is a separate experiment.
-8. **`has_nested_state` rollout is now complete** across every tenant-role task that
+6. **`has_nested_state` rollout is now complete** across every tenant-role task that
    loops over intent objects: `epg.yml`, `ap.yml`, `tenant.yml`, `bd.yml`, `vrf.yml`,
    `contract.yml`, `filter.yml`, `l3out.yml`, `match_rule.yml`, `set_rule.yml`, and
    `route_map.yml` have all been switched from `<item>.state is defined` to the

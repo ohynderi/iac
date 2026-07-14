@@ -81,8 +81,8 @@
       {% if vrf.PIM is defined %}
       ,
       {% set pim_ctrl_flags = [] %}
-      {% if vrf.PIM['fast-convergenace'] | default(vrf_pim_default_fast_convergence) %}{% set _ = pim_ctrl_flags.append('fast-conv') %}{% endif %}
-      {% if vrf.PIM['strict-RFC-compilant'] | default(vrf_pim_default_strict_rfc_compliant) %}{% set _ = pim_ctrl_flags.append('strict-rfc-compliant') %}{% endif %}
+      {% if vrf.PIM['fast-convergence'] | default(vrf_pim_default_fast_convergence) %}{% set _ = pim_ctrl_flags.append('fast-conv') %}{% endif %}
+      {% if vrf.PIM['strict-RFC-compliant'] | default(vrf_pim_default_strict_rfc_compliant) %}{% set _ = pim_ctrl_flags.append('strict-rfc-compliant') %}{% endif %}
       {
         "pimCtxP": {
           "attributes": {

@@ -4,8 +4,10 @@ import_dom_task: true
 import_intf_pol_task: true
 import_ipg_task: true
 import_leaf_intf_prof_task: true
+import_intf_selector_task: true
 import_leaf_prof_task: true
 import_vlan_pool_task: true
+import_vpc_domain_task: true
 
 aaep_name_prefix: ''
 aaep_name_suffix: ''
@@ -52,9 +54,15 @@ ipg_default_lag: ''
 
 leaf_inf_prof_name_prefix: ''
 leaf_inf_prof_name_suffix: ''
+leaf_intf_prof_default_description: ''
+
+intf_default_selector_description: ''
+intf_default_port_block_name: 'block2'
+intf_default_port_block_description: ''
 
 leaf_prof_name_prefix: ''
 leaf_prof_name_suffix: ''
+leaf_prof_default_description: ''
 
 vlan_pool_name_prefix: ''
 vlan_pool_name_suffix: ''
@@ -64,3 +72,6 @@ vlan_pool_default_allocation_mode: 'dynamic'
 vlan_range_default_description: ''
 vlan_range_default_role: 'external'
 vlan_range_default_allocation_mode: 'inherit'
+
+vpc_protection_group_name_prefix: ''
+vpc_protection_group_name_suffix: ''
